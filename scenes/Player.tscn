@@ -1,0 +1,289 @@
+[gd_scene load_steps=10 format=2]
+
+[ext_resource path="res://scripts/Player.gd" type="Script" id=1]
+[ext_resource path="res://scripts/Init_Script.gd" type="Script" id=2]
+[ext_resource path="res://textures/crosshair.png" type="Texture" id=3]
+[ext_resource path="res://textures/crosshair_usable.png" type="Texture" id=4]
+[ext_resource path="res://fonts/Almanack/rm_almanack.ttf" type="DynamicFontData" id=5]
+
+[sub_resource type="CapsuleShape" id=2]
+
+radius = 0.2
+height = 1.4
+
+[sub_resource type="ArrayMesh" id=4]
+
+resource_name = "Plane"
+blend_shape_mode = 1
+custom_aabb = AABB( 0, 0, 0, 0, 0, 0 )
+surfaces/0 = {
+"aabb": AABB( -0.691102, -0.9, -0.256339, 1.3822, 1.8, 0.456339 ),
+"array_data": PoolByteArray( 185, 178, 51, 187, 102, 178, 0, 60, 0, 129, 0, 0, 185, 50, 51, 187, 102, 50, 0, 60, 0, 129, 0, 0, 185, 178, 51, 187, 102, 50, 0, 60, 0, 129, 0, 0, 48, 182, 107, 54, 102, 50, 0, 60, 209, 117, 12, 0, 157, 184, 192, 53, 69, 175, 0, 60, 209, 117, 12, 0, 157, 184, 81, 53, 47, 48, 0, 60, 209, 117, 12, 0, 48, 54, 107, 54, 102, 50, 0, 60, 0, 0, 127, 0, 48, 182, 136, 41, 102, 50, 0, 60, 0, 0, 127, 0, 48, 54, 136, 41, 102, 50, 0, 60, 0, 0, 127, 0, 48, 182, 107, 54, 102, 50, 0, 60, 139, 47, 0, 0, 250, 177, 51, 59, 82, 176, 0, 60, 139, 47, 0, 0, 48, 182, 107, 54, 102, 178, 0, 60, 139, 47, 0, 0, 48, 54, 208, 183, 102, 178, 0, 60, 116, 206, 0, 0, 185, 50, 51, 187, 102, 50, 0, 60, 116, 206, 0, 0, 185, 50, 51, 187, 102, 178, 0, 60, 116, 206, 0, 0, 48, 182, 136, 41, 102, 178, 0, 60, 0, 0, 129, 0, 48, 54, 107, 54, 102, 178, 0, 60, 0, 0, 129, 0, 48, 54, 136, 41, 102, 178, 0, 60, 0, 0, 129, 0, 185, 178, 51, 187, 102, 50, 0, 60, 140, 206, 0, 0, 48, 182, 208, 183, 102, 178, 0, 60, 140, 206, 0, 0, 185, 178, 51, 187, 102, 178, 0, 60, 140, 206, 0, 0, 48, 54, 107, 54, 102, 50, 0, 60, 27, 124, 0, 0, 157, 56, 192, 53, 69, 175, 0, 60, 27, 124, 0, 0, 48, 54, 107, 54, 102, 178, 0, 60, 27, 124, 0, 0, 48, 182, 208, 183, 102, 50, 0, 60, 129, 0, 0, 0, 48, 182, 136, 41, 102, 178, 0, 60, 129, 0, 0, 0, 48, 182, 208, 183, 102, 178, 0, 60, 129, 0, 0, 0, 48, 182, 208, 183, 102, 178, 0, 60, 0, 0, 130, 0, 48, 54, 136, 41, 102, 178, 0, 60, 0, 0, 130, 0, 48, 54, 208, 183, 102, 178, 0, 60, 0, 0, 130, 0, 48, 54, 208, 183, 102, 50, 0, 60, 0, 0, 127, 0, 185, 178, 51, 187, 102, 50, 0, 60, 0, 0, 127, 0, 185, 50, 51, 187, 102, 50, 0, 60, 0, 0, 127, 0, 185, 178, 51, 187, 102, 178, 0, 60, 0, 0, 129, 0, 48, 54, 208, 183, 102, 178, 0, 60, 0, 0, 129, 0, 185, 50, 51, 187, 102, 178, 0, 60, 0, 0, 129, 0, 48, 182, 107, 54, 102, 178, 0, 60, 0, 16, 131, 0, 250, 49, 51, 59, 82, 176, 0, 60, 0, 16, 131, 0, 48, 54, 107, 54, 102, 178, 0, 60, 0, 16, 131, 0, 250, 177, 51, 59, 82, 176, 0, 60, 0, 127, 0, 0, 250, 49, 51, 59, 82, 48, 0, 60, 0, 127, 0, 0, 250, 49, 51, 59, 82, 176, 0, 60, 0, 127, 0, 0, 48, 54, 136, 41, 102, 178, 0, 60, 127, 0, 0, 0, 48, 54, 208, 183, 102, 50, 0, 60, 127, 0, 0, 0, 48, 54, 208, 183, 102, 178, 0, 60, 127, 0, 0, 0, 48, 182, 107, 54, 102, 50, 0, 60, 0, 16, 125, 0, 250, 49, 51, 59, 82, 48, 0, 60, 0, 16, 125, 0, 250, 177, 51, 59, 82, 48, 0, 60, 0, 16, 125, 0, 48, 54, 107, 54, 102, 178, 0, 60, 117, 47, 0, 0, 250, 49, 51, 59, 82, 48, 0, 60, 117, 47, 0, 0, 48, 54, 107, 54, 102, 50, 0, 60, 117, 47, 0, 0, 135, 185, 45, 44, 55, 174, 0, 60, 138, 46, 5, 0, 157, 184, 81, 53, 47, 48, 0, 60, 138, 46, 5, 0, 157, 184, 192, 53, 69, 175, 0, 60, 138, 46, 5, 0, 48, 182, 136, 41, 102, 178, 0, 60, 204, 0, 141, 0, 157, 184, 192, 53, 69, 175, 0, 60, 204, 0, 141, 0, 48, 182, 107, 54, 102, 178, 0, 60, 204, 0, 141, 0, 48, 182, 136, 41, 102, 50, 0, 60, 241, 19, 124, 0, 157, 184, 81, 53, 47, 48, 0, 60, 241, 19, 124, 0, 135, 185, 110, 38, 61, 49, 0, 60, 241, 19, 124, 0, 135, 185, 45, 44, 55, 174, 0, 60, 250, 37, 135, 0, 140, 183, 158, 182, 25, 180, 0, 60, 250, 37, 135, 0, 217, 184, 232, 182, 17, 180, 0, 60, 250, 37, 135, 0, 140, 183, 55, 183, 26, 173, 0, 60, 16, 133, 230, 0, 217, 184, 232, 182, 17, 180, 0, 60, 16, 133, 230, 0, 140, 183, 158, 182, 25, 180, 0, 60, 16, 133, 230, 0, 135, 185, 110, 38, 61, 49, 0, 60, 247, 195, 110, 0, 140, 183, 55, 183, 26, 173, 0, 60, 247, 195, 110, 0, 48, 182, 136, 41, 102, 50, 0, 60, 247, 195, 110, 0, 135, 185, 45, 44, 55, 174, 0, 60, 131, 237, 253, 0, 217, 184, 134, 183, 61, 173, 0, 60, 131, 237, 253, 0, 135, 185, 110, 38, 61, 49, 0, 60, 131, 237, 253, 0, 48, 182, 136, 41, 102, 178, 0, 60, 124, 234, 252, 0, 140, 183, 55, 183, 26, 173, 0, 60, 124, 234, 252, 0, 140, 183, 158, 182, 25, 180, 0, 60, 124, 234, 252, 0, 135, 57, 45, 44, 55, 174, 0, 60, 118, 44, 6, 0, 157, 56, 81, 53, 47, 48, 0, 60, 118, 44, 6, 0, 135, 57, 110, 38, 61, 49, 0, 60, 118, 44, 6, 0, 157, 56, 192, 53, 69, 175, 0, 60, 52, 0, 141, 0, 48, 54, 136, 41, 102, 178, 0, 60, 52, 0, 141, 0, 48, 54, 107, 54, 102, 178, 0, 60, 52, 0, 141, 0, 48, 54, 136, 41, 102, 50, 0, 60, 43, 0, 119, 0, 157, 56, 81, 53, 47, 48, 0, 60, 43, 0, 119, 0, 48, 54, 107, 54, 102, 50, 0, 60, 43, 0, 119, 0, 135, 57, 45, 44, 55, 174, 0, 60, 38, 21, 138, 0, 140, 55, 158, 182, 25, 180, 0, 60, 38, 21, 138, 0, 48, 54, 136, 41, 102, 178, 0, 60, 38, 21, 138, 0, 217, 56, 232, 182, 17, 180, 0, 60, 240, 133, 230, 0, 140, 55, 55, 183, 26, 173, 0, 60, 240, 133, 230, 0, 140, 55, 158, 182, 25, 180, 0, 60, 240, 133, 230, 0, 140, 55, 55, 183, 26, 173, 0, 60, 9, 195, 110, 0, 135, 57, 110, 38, 61, 49, 0, 60, 9, 195, 110, 0, 48, 54, 136, 41, 102, 50, 0, 60, 9, 195, 110, 0, 217, 56, 134, 183, 61, 173, 0, 60, 125, 237, 253, 0, 135, 57, 45, 44, 55, 174, 0, 60, 125, 237, 253, 0, 135, 57, 110, 38, 61, 49, 0, 60, 125, 237, 253, 0, 48, 54, 136, 41, 102, 178, 0, 60, 131, 235, 0, 0, 140, 55, 55, 183, 26, 173, 0, 60, 131, 235, 0, 0, 48, 54, 136, 41, 102, 50, 0, 60, 131, 235, 0, 0, 48, 54, 136, 41, 102, 50, 0, 60, 0, 0, 127, 0, 48, 182, 208, 183, 102, 50, 0, 60, 0, 0, 127, 0, 48, 54, 208, 183, 102, 50, 0, 60, 0, 0, 127, 0, 185, 178, 51, 187, 102, 178, 0, 60, 0, 129, 0, 0, 185, 50, 51, 187, 102, 178, 0, 60, 0, 129, 0, 0, 185, 50, 51, 187, 102, 50, 0, 60, 0, 129, 0, 0, 48, 182, 107, 54, 102, 50, 0, 60, 229, 124, 0, 0, 48, 182, 107, 54, 102, 178, 0, 60, 229, 124, 0, 0, 157, 184, 192, 53, 69, 175, 0, 60, 229, 124, 0, 0, 48, 182, 107, 54, 102, 50, 0, 60, 0, 0, 127, 0, 48, 182, 107, 54, 102, 50, 0, 60, 139, 47, 0, 0, 250, 177, 51, 59, 82, 48, 0, 60, 139, 47, 0, 0, 250, 177, 51, 59, 82, 176, 0, 60, 139, 47, 0, 0, 48, 54, 208, 183, 102, 178, 0, 60, 116, 206, 0, 0, 48, 54, 208, 183, 102, 50, 0, 60, 116, 206, 0, 0, 185, 50, 51, 187, 102, 50, 0, 60, 116, 206, 0, 0, 48, 182, 107, 54, 102, 178, 0, 60, 0, 0, 129, 0, 185, 178, 51, 187, 102, 50, 0, 60, 140, 206, 0, 0, 48, 182, 208, 183, 102, 50, 0, 60, 140, 206, 0, 0, 48, 182, 208, 183, 102, 178, 0, 60, 140, 206, 0, 0, 48, 54, 107, 54, 102, 50, 0, 60, 47, 117, 12, 0, 157, 56, 81, 53, 47, 48, 0, 60, 47, 117, 12, 0, 157, 56, 192, 53, 69, 175, 0, 60, 47, 117, 12, 0, 48, 182, 208, 183, 102, 50, 0, 60, 129, 0, 0, 0, 48, 182, 136, 41, 102, 50, 0, 60, 129, 0, 0, 0, 48, 182, 136, 41, 102, 178, 0, 60, 129, 0, 0, 0, 48, 182, 208, 183, 102, 178, 0, 60, 0, 0, 129, 0, 48, 182, 136, 41, 102, 178, 0, 60, 0, 0, 129, 0, 48, 54, 136, 41, 102, 178, 0, 60, 0, 0, 129, 0, 48, 54, 208, 183, 102, 50, 0, 60, 0, 0, 127, 0, 48, 182, 208, 183, 102, 50, 0, 60, 0, 0, 127, 0, 185, 178, 51, 187, 102, 50, 0, 60, 0, 0, 127, 0, 185, 178, 51, 187, 102, 178, 0, 60, 0, 0, 129, 0, 48, 182, 208, 183, 102, 178, 0, 60, 0, 0, 129, 0, 48, 54, 208, 183, 102, 178, 0, 60, 0, 0, 129, 0, 48, 182, 107, 54, 102, 178, 0, 60, 0, 16, 131, 0, 250, 177, 51, 59, 82, 176, 0, 60, 0, 16, 131, 0, 250, 49, 51, 59, 82, 176, 0, 60, 0, 16, 131, 0, 250, 177, 51, 59, 82, 176, 0, 60, 0, 126, 0, 0, 250, 177, 51, 59, 82, 48, 0, 60, 0, 126, 0, 0, 250, 49, 51, 59, 82, 48, 0, 60, 0, 126, 0, 0, 48, 54, 136, 41, 102, 178, 0, 60, 127, 0, 0, 0, 48, 54, 136, 41, 102, 50, 0, 60, 127, 0, 0, 0, 48, 54, 208, 183, 102, 50, 0, 60, 127, 0, 0, 0, 48, 182, 107, 54, 102, 50, 0, 60, 0, 16, 125, 0, 48, 54, 107, 54, 102, 50, 0, 60, 0, 16, 125, 0, 250, 49, 51, 59, 82, 48, 0, 60, 0, 16, 125, 0, 48, 54, 107, 54, 102, 178, 0, 60, 117, 47, 0, 0, 250, 49, 51, 59, 82, 176, 0, 60, 117, 47, 0, 0, 250, 49, 51, 59, 82, 48, 0, 60, 117, 47, 0, 0, 135, 185, 45, 44, 55, 174, 0, 60, 138, 44, 6, 0, 135, 185, 110, 38, 61, 49, 0, 60, 138, 44, 6, 0, 157, 184, 81, 53, 47, 48, 0, 60, 138, 44, 6, 0, 48, 182, 136, 41, 102, 178, 0, 60, 216, 8, 136, 0, 135, 185, 45, 44, 55, 174, 0, 60, 216, 8, 136, 0, 157, 184, 192, 53, 69, 175, 0, 60, 216, 8, 136, 0, 48, 182, 136, 41, 102, 50, 0, 60, 213, 0, 119, 0, 48, 182, 107, 54, 102, 50, 0, 60, 213, 0, 119, 0, 157, 184, 81, 53, 47, 48, 0, 60, 213, 0, 119, 0, 135, 185, 45, 44, 55, 174, 0, 60, 218, 21, 138, 0, 48, 182, 136, 41, 102, 178, 0, 60, 218, 21, 138, 0, 140, 183, 158, 182, 25, 180, 0, 60, 218, 21, 138, 0, 140, 183, 55, 183, 26, 173, 0, 60, 18, 134, 229, 0, 217, 184, 134, 183, 61, 173, 0, 60, 18, 134, 229, 0, 217, 184, 232, 182, 17, 180, 0, 60, 18, 134, 229, 0, 135, 185, 110, 38, 61, 49, 0, 60, 6, 201, 114, 0, 217, 184, 134, 183, 61, 173, 0, 60, 6, 201, 114, 0, 140, 183, 55, 183, 26, 173, 0, 60, 6, 201, 114, 0, 135, 185, 45, 44, 55, 174, 0, 60, 131, 236, 252, 0, 217, 184, 232, 182, 17, 180, 0, 60, 131, 236, 252, 0, 217, 184, 134, 183, 61, 173, 0, 60, 131, 236, 252, 0, 48, 182, 136, 41, 102, 178, 0, 60, 125, 235, 0, 0, 48, 182, 136, 41, 102, 50, 0, 60, 125, 235, 0, 0, 140, 183, 55, 183, 26, 173, 0, 60, 125, 235, 0, 0, 135, 57, 45, 44, 55, 174, 0, 60, 118, 46, 5, 0, 157, 56, 192, 53, 69, 175, 0, 60, 118, 46, 5, 0, 157, 56, 81, 53, 47, 48, 0, 60, 118, 46, 5, 0, 157, 56, 192, 53, 69, 175, 0, 60, 40, 8, 136, 0, 135, 57, 45, 44, 55, 174, 0, 60, 40, 8, 136, 0, 48, 54, 136, 41, 102, 178, 0, 60, 40, 8, 136, 0, 48, 54, 136, 41, 102, 50, 0, 60, 15, 19, 124, 0, 135, 57, 110, 38, 61, 49, 0, 60, 15, 19, 124, 0, 157, 56, 81, 53, 47, 48, 0, 60, 15, 19, 124, 0, 135, 57, 45, 44, 55, 174, 0, 60, 6, 37, 135, 0, 217, 56, 232, 182, 17, 180, 0, 60, 6, 37, 135, 0, 140, 55, 158, 182, 25, 180, 0, 60, 6, 37, 135, 0, 217, 56, 232, 182, 17, 180, 0, 60, 238, 134, 229, 0, 217, 56, 134, 183, 61, 173, 0, 60, 238, 134, 229, 0, 140, 55, 55, 183, 26, 173, 0, 60, 238, 134, 229, 0, 140, 55, 55, 183, 26, 173, 0, 60, 250, 201, 114, 0, 217, 56, 134, 183, 61, 173, 0, 60, 250, 201, 114, 0, 135, 57, 110, 38, 61, 49, 0, 60, 250, 201, 114, 0, 217, 56, 134, 183, 61, 173, 0, 60, 125, 236, 252, 0, 217, 56, 232, 182, 17, 180, 0, 60, 125, 236, 252, 0, 135, 57, 45, 44, 55, 174, 0, 60, 125, 236, 252, 0, 48, 54, 136, 41, 102, 178, 0, 60, 132, 234, 252, 0, 140, 55, 158, 182, 25, 180, 0, 60, 132, 234, 252, 0, 140, 55, 55, 183, 26, 173, 0, 60, 132, 234, 252, 0, 48, 54, 136, 41, 102, 50, 0, 60, 0, 0, 126, 0, 48, 182, 136, 41, 102, 50, 0, 60, 0, 0, 126, 0, 48, 182, 208, 183, 102, 50, 0, 60, 0, 0, 126, 0 ),
+"array_index_data": PoolByteArray( 0, 0, 2, 0, 1, 0, 3, 0, 5, 0, 4, 0, 6, 0, 8, 0, 7, 0, 9, 0, 11, 0, 10, 0, 12, 0, 14, 0, 13, 0, 15, 0, 17, 0, 16, 0, 18, 0, 20, 0, 19, 0, 21, 0, 23, 0, 22, 0, 24, 0, 26, 0, 25, 0, 27, 0, 29, 0, 28, 0, 30, 0, 32, 0, 31, 0, 33, 0, 35, 0, 34, 0, 36, 0, 38, 0, 37, 0, 39, 0, 41, 0, 40, 0, 42, 0, 44, 0, 43, 0, 45, 0, 47, 0, 46, 0, 48, 0, 50, 0, 49, 0, 51, 0, 53, 0, 52, 0, 54, 0, 56, 0, 55, 0, 57, 0, 59, 0, 58, 0, 60, 0, 62, 0, 61, 0, 63, 0, 65, 0, 64, 0, 66, 0, 68, 0, 67, 0, 69, 0, 71, 0, 70, 0, 72, 0, 74, 0, 73, 0, 75, 0, 77, 0, 76, 0, 78, 0, 80, 0, 79, 0, 81, 0, 83, 0, 82, 0, 84, 0, 86, 0, 85, 0, 87, 0, 89, 0, 88, 0, 90, 0, 92, 0, 91, 0, 93, 0, 95, 0, 94, 0, 96, 0, 98, 0, 97, 0, 99, 0, 101, 0, 100, 0, 102, 0, 104, 0, 103, 0, 105, 0, 107, 0, 106, 0, 6, 0, 7, 0, 108, 0, 109, 0, 111, 0, 110, 0, 112, 0, 114, 0, 113, 0, 15, 0, 16, 0, 115, 0, 116, 0, 118, 0, 117, 0, 119, 0, 121, 0, 120, 0, 122, 0, 124, 0, 123, 0, 125, 0, 127, 0, 126, 0, 128, 0, 130, 0, 129, 0, 131, 0, 133, 0, 132, 0, 134, 0, 136, 0, 135, 0, 137, 0, 139, 0, 138, 0, 140, 0, 142, 0, 141, 0, 143, 0, 145, 0, 144, 0, 146, 0, 148, 0, 147, 0, 149, 0, 151, 0, 150, 0, 152, 0, 154, 0, 153, 0, 155, 0, 157, 0, 156, 0, 158, 0, 160, 0, 159, 0, 161, 0, 163, 0, 162, 0, 164, 0, 166, 0, 165, 0, 167, 0, 169, 0, 168, 0, 170, 0, 172, 0, 171, 0, 173, 0, 175, 0, 174, 0, 176, 0, 178, 0, 177, 0, 179, 0, 181, 0, 180, 0, 182, 0, 184, 0, 183, 0, 185, 0, 187, 0, 186, 0, 188, 0, 190, 0, 189, 0, 191, 0, 193, 0, 192, 0, 194, 0, 196, 0, 195, 0, 197, 0, 199, 0, 198, 0 ),
+"blend_shape_data": [  ],
+"format": 98051,
+"index_count": 204,
+"primitive": 4,
+"skeleton_aabb": [  ],
+"vertex_count": 200
+}
+_sections_unfolded = [ "Resource" ]
+
+[sub_resource type="SpatialMaterial" id=3]
+
+render_priority = 0
+flags_transparent = false
+flags_unshaded = false
+flags_vertex_lighting = false
+flags_no_depth_test = false
+flags_use_point_size = false
+flags_world_triplanar = false
+flags_fixed_size = false
+flags_albedo_tex_force_srgb = false
+vertex_color_use_as_albedo = false
+vertex_color_is_srgb = false
+params_diffuse_mode = 3
+params_specular_mode = 0
+params_blend_mode = 0
+params_cull_mode = 0
+params_depth_draw_mode = 0
+params_line_width = 1.0
+params_point_size = 1.0
+params_billboard_mode = 0
+params_grow = false
+params_use_alpha_scissor = false
+albedo_color = Color( 0.839844, 0.25712, 0.196838, 1 )
+metallic = 0.0
+metallic_specular = 0.5
+metallic_texture_channel = 0
+roughness = 0.8
+roughness_texture_channel = 0
+emission_enabled = false
+normal_enabled = false
+rim_enabled = false
+clearcoat_enabled = false
+anisotropy_enabled = false
+ao_enabled = false
+depth_enabled = false
+subsurf_scatter_enabled = false
+transmission_enabled = false
+refraction_enabled = false
+detail_enabled = false
+uv1_scale = Vector3( 1, 1, 1 )
+uv1_offset = Vector3( 0, 0, 0 )
+uv1_triplanar = false
+uv1_triplanar_sharpness = 1.0
+uv2_scale = Vector3( 1, 1, 1 )
+uv2_offset = Vector3( 0, 0, 0 )
+uv2_triplanar = false
+uv2_triplanar_sharpness = 1.0
+proximity_fade_enable = false
+distance_fade_enable = false
+_sections_unfolded = [ "Albedo", "Roughness" ]
+
+[sub_resource type="DynamicFont" id=5]
+
+size = 32
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 5 )
+_sections_unfolded = [ "Extra Spacing", "Font", "Settings" ]
+
+[node name="Player" type="KinematicBody" index="0"]
+
+input_ray_pickable = true
+input_capture_on_drag = false
+collision_layer = 1
+collision_mask = 1
+axis_lock_linear_x = false
+axis_lock_linear_y = false
+axis_lock_linear_z = false
+axis_lock_angular_x = false
+axis_lock_angular_y = false
+axis_lock_angular_z = false
+collision/safe_margin = 0.001
+script = ExtResource( 1 )
+
+[node name="Init_Script" type="Spatial" parent="." index="0"]
+
+script = ExtResource( 2 )
+
+[node name="CollisionShape" type="CollisionShape" parent="." index="1"]
+
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, 0, 0, 0 )
+shape = SubResource( 2 )
+disabled = false
+_sections_unfolded = [ "Transform" ]
+
+[node name="FPC_Base_Mesh2" type="MeshInstance" parent="." index="2"]
+
+layers = 524288
+material_override = null
+cast_shadow = 1
+extra_cull_margin = 0.0
+use_in_baked_light = true
+lod_min_distance = 0.0
+lod_min_hysteresis = 0.0
+lod_max_distance = 0.0
+lod_max_hysteresis = 0.0
+mesh = SubResource( 4 )
+skeleton = NodePath("..")
+material/0 = SubResource( 3 )
+_sections_unfolded = [ "material" ]
+
+[node name="Camera_Main" type="Camera" parent="." index="3"]
+
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0 )
+keep_aspect = 1
+cull_mask = 524287
+environment = null
+h_offset = 0.0
+v_offset = 0.0
+doppler_tracking = 0
+projection = 0
+current = false
+fov = 70.0
+size = 1.0
+near = 0.05
+far = 100.0
+_sections_unfolded = [ "Transform", "Visibility" ]
+
+[node name="HUD" type="Control" parent="." index="4"]
+
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_right = 1360.0
+margin_bottom = 768.0
+rect_pivot_offset = Vector2( 0, 0 )
+mouse_filter = 2
+mouse_default_cursor_shape = 0
+size_flags_horizontal = 1
+size_flags_vertical = 1
+_sections_unfolded = [ "Mouse", "Rect" ]
+
+[node name="Camera2D" type="Camera2D" parent="HUD" index="0"]
+
+position = Vector2( 680, 384 )
+anchor_mode = 1
+rotating = false
+current = false
+zoom = Vector2( 1, 1 )
+limit_left = -10000000
+limit_top = -10000000
+limit_right = 10000000
+limit_bottom = 10000000
+limit_smoothed = false
+drag_margin_h_enabled = true
+drag_margin_v_enabled = true
+smoothing_enabled = false
+smoothing_speed = 5.0
+offset_v = 0.0
+offset_h = 0.0
+drag_margin_left = 0.2
+drag_margin_top = 0.2
+drag_margin_right = 0.2
+drag_margin_bottom = 0.2
+editor_draw_screen = true
+editor_draw_limits = false
+editor_draw_drag_margin = false
+_sections_unfolded = [ "Transform" ]
+
+[node name="Crosshair" type="TextureRect" parent="HUD/Camera2D" index="0"]
+
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -48.0
+margin_top = -48.0
+margin_right = -16.0
+margin_bottom = -16.0
+rect_pivot_offset = Vector2( 0, 0 )
+mouse_filter = 2
+mouse_default_cursor_shape = 0
+size_flags_horizontal = 1
+size_flags_vertical = 1
+texture = ExtResource( 3 )
+expand = true
+stretch_mode = 0
+_sections_unfolded = [ "Anchor", "Mouse", "Rect" ]
+
+[node name="Crosshair_Useable" type="TextureRect" parent="HUD/Camera2D/Crosshair" index="0"]
+
+visible = false
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = -4.0
+margin_top = -4.0
+margin_right = 36.0
+margin_bottom = 36.0
+rect_pivot_offset = Vector2( 0, 0 )
+mouse_filter = 2
+mouse_default_cursor_shape = 0
+size_flags_horizontal = 1
+size_flags_vertical = 1
+texture = ExtResource( 4 )
+expand = true
+stretch_mode = 0
+_sections_unfolded = [ "Mouse", "Rect" ]
+
+[node name="DEBUG" type="Control" parent="HUD/Camera2D" index="1"]
+
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_right = 40.0
+margin_bottom = 40.0
+rect_pivot_offset = Vector2( 0, 0 )
+mouse_filter = 2
+mouse_default_cursor_shape = 0
+size_flags_horizontal = 1
+size_flags_vertical = 1
+_sections_unfolded = [ "Mouse" ]
+
+[node name="Debug_Label" type="Label" parent="HUD/Camera2D/DEBUG" index="0"]
+
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = -680.0
+margin_top = -384.0
+margin_right = -424.0
+margin_bottom = -320.0
+rect_pivot_offset = Vector2( 0, 0 )
+mouse_filter = 2
+mouse_default_cursor_shape = 0
+size_flags_horizontal = 1
+size_flags_vertical = 4
+custom_fonts/font = SubResource( 5 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "-------"
+percent_visible = 1.0
+lines_skipped = 0
+max_lines_visible = -1
+_sections_unfolded = [ "Mouse", "Rect", "Visibility", "custom_fonts" ]
+
+[node name="Debug_Label_BG" type="ColorRect" parent="HUD/Camera2D/DEBUG/Debug_Label" index="0"]
+
+show_behind_parent = true
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_right = 256.0
+margin_bottom = 64.0
+rect_pivot_offset = Vector2( 0, 0 )
+mouse_filter = 2
+mouse_default_cursor_shape = 0
+size_flags_horizontal = 1
+size_flags_vertical = 1
+color = Color( 1, 1, 1, 1 )
+_sections_unfolded = [ "Mouse", "Rect", "Visibility" ]
+
+
