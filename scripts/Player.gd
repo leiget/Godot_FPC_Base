@@ -295,7 +295,7 @@ var CamInterpo_Length_Secs = CamInterpo_Default_Length_Secs
 func InterpolateCamera(Prev_Pos_Local_Y, Target_Pos_Local_Y, Time_Current, Time_Delta):
 	#If the current time is less than the length of time it takes to interpolate the camera....
 	if(Time_Current < CamInterpo_Length_Secs):
-		#print(Time_Current/CamInterpo_Length_Secs)
+		#Set the camera's local translation according to how far along the interpolation is.
 		Node_Camera3D.translation.y = lerp(Prev_Pos_Local_Y, Target_Pos_Local_Y, Time_Current/CamInterpo_Length_Secs)
 		#Increment the current time.
 		Time_Current += Time_Delta
@@ -833,7 +833,6 @@ func _physics_process(delta):
 						#TODO: Should I loop through all slides? I've done this before but it wouldn't go up
 						#	steps properly.
 						if((acos(get_slide_collision(0).normal.y)) < MaxFloorAngleRad):
-							print(acos(get_slide_collision(0).normal.y))
 							#Set the speed multiplier according to the steepness of the slope.
 							Falling_Speed_Multiplier = acos(get_slide_collision(0).normal.y)/MaxFloorAngleRad
 				#Otherwise, if the player is not moving...
@@ -962,7 +961,6 @@ func _physics_process(delta):
 		
 											#Get the local Y position of the camera before it was moved up the step.
 											var temp = to_global(Node_Camera3D.translation)
-											#print("(global)temp.y == ", temp.y)
 		
 											#Move the player up a little past the step.
 											global_translate(Vector3(0.0, SteppingUp_SteppingDistance, 0.0))
