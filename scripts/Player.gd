@@ -3,20 +3,36 @@
 #########################################
 #- Make it to where if a ramp is too steep, don't let the character run up it at all in the first place.
 #- Make the stepping algorithim better when running parralel along a step.
-#- Do moving platforms.
-#	- Check shake.
-#- Slopes
-#	- Have it to where the character is only affected by the slope when walking up or down them, but not sideways.
-#	- TODO: Should I loop through all slides in the slope speed part of teh script? I've done this before but it wouldn't go up
-#		steps properly. I'll probably just have to figure out why and have it loop through all loops.
-#- Find out why jumping while going against a wall straight on keeps my character from jumping. Probably has something to do with
-#	"is_on_floor()"
+#- Check shaking of character when on a moving platform.
+#- Maybe I need to change the order in which things work? That is, change the order of jumping, falling, moving, etc.
+#	- I might need to put all of the "for Slide in range(get_slide_count()):" loops together, so it doesn't have to loop through them all several times.
+#	  That would take a lot of time. And I'm not sure it would work. I'll just ahve to see.
+
+#########################################
+#				NOTES					#
+#########################################
+#- The collision safety margin must be set to at least 0.01 for the player's kinematic body, or else things like walking up steps and such will not work correctly.
+#	- You'll need to test it and find out what works whenever you change the size of the player's collision shape.
+#- This script is made with the intent that the player's collsion shape is a capsule.
 
 #########################
 #		EXTENDS			#
 #########################
 #Extend the KinematicBody and all inherited node variables and functions to this script.
 extends KinematicBody
+
+#########################
+#		DEFINES			#
+#########################
+#The crest factor and it's half in handy variables.
+#	It's nessecary to understand normals and how they work before moving on in this script.
+#	The half crest factor, as far as 2D and 3D character movement and surface normals go, makes the velocity of the character correct when walking diagonally.
+#	The way it works is this: imagine the player pressed both forward and right at the same time (in a 3D first-person game). He is facing forward/north in global
+#	space. And let's say the base walk velocity is just 1. The final velocity without the crest factor taken into effect is (1.0, 0.0, -1.0) in Godot. This may
+#	sound correct, but think about this: what is it when the player is facing exactly 45 degs clockwise, or NW and he presses both forward and right?
+#	The final walk velocity will be ()
+const CrestFactor = 1.414213562373095
+const CrestFactor_Half = 0.7071067811865475
 
 #########################
 #		SIGNALS			#
@@ -28,6 +44,8 @@ signal RenderColl(Coll_Vec3)
 #Signal for rendering the raycast line.
 #	It takes the vector you want the ray to go to.
 signal RayCast_Line(RayTo_Vec3)
+#Signal for showing red collision spheres.
+signal Coll_Sphere_Show(Pos_Vec3)
 
 #########################
 #		NODES			#
@@ -47,6 +65,8 @@ var Debug_Label_String = "-------------------"
 #########################
 #This allows mouselooking. This is for just in case you need it.
 var MouseLook = true
+#The maximum number of slides to calculate in "move_and_slide()".
+var MaxSlides = 4
 #Max floor angle in radians.
 var MaxFloorAngleRad = 0.7
 #Max floor angle normalized on the Y axis, for use in normal calculations.
@@ -59,11 +79,11 @@ var Falling_Gravity = 9.8
 var Jump_Vel_RelativeToGrav = 1.55
 #How long the jump is until its peak, when it then starts to fall gradually.
 #	This is in seconds.
-var Jump_Length = 0.6
+var Jump_Length = .75
 #The base walk speed.
 var BaseWalkVelocity = 10
 #The speed of the character when pressing shift while moving.
-var ShiftWalkVelocity_Multiplier =  4
+var ShiftWalkVelocity_Multiplier =  2
 #If the body is standing on a slope and the horizontal speed (relative to the floor’s speed)
 #	goes below SlopeStopMinVel, the body will stop completely.
 #When set to lower values, the body will not be able to stand still on steep slopes.
@@ -96,8 +116,8 @@ var State_OnWalls = false
 var State_Falling = false
 #Is the player jumping?
 var State_Jumping = false
-#Is the player pressing movement key, that is, FW, BW, Left, or Right?
-var State_MovementPressed = false
+#Is the player pressing the movement keys in a diagonal way?
+var State_Movement_Diagonal_Pressed = false
 
 #########################################
 #		LOCALLY GLOBAL VARIABLES		#
@@ -283,10 +303,25 @@ var CamInterpo_StartingPos_Local_Y = 0.0
 var CamInterpo_TargetPos_Local_Y = 0.0
 #The current time of the interpolation, in seconds.
 var CamInterpo_CurrentTime_Secs = 0.0
-#
+#The default interpolation length.
 var CamInterpo_Default_Length_Secs = 0.15
 #How long it takes to interpolate the camera, in seconds.
 var CamInterpo_Length_Secs = CamInterpo_Default_Length_Secs
+
+#########################
+#		SLOPE SPEED		#
+#########################
+var Slope_PlayerVelVec2D = Vector2(0.0, 0.0)
+var Slope_FloorNor2D = Vector2(0.0, 0.0)
+var Slope_Magnitude = 0.0
+var Slope_MagnitudeRatio = 0.0
+var Slope_DotProduct = 0.0
+
+#########################
+#		INTERACTION		#
+#########################
+#A list of objects that have been touched recently that have touch functions.
+var Touch_ObjectsTouched = []
 
 ####################################################################################################
 #									FUNCTIONS													   #
@@ -360,7 +395,7 @@ func _ready():
 	#This just makes sure that if the player is pressing the jump button when starting the scene or level
 	#	he doesn't just keep jumping. Or, who knows, maybe some other crazy thing will happen.
 	#	It's the responsibility of the game desinger and programmer to code for all possiblities so as to
-	#	have stable code. Even little thigns like this can make a difference. But you may never know.
+	#	have stable code. Even little things like this can make a difference.
 	Pressed_Use_Released = false
 	
 	#Set the initial player position variable.
@@ -379,6 +414,10 @@ func _ready():
 	
 	#Set the default label text
 	Debug_Label.set_text(Debug_Label_String)
+	
+	#Setup the array size of possible touched objects as the max number of slides, as this will
+	#allow the list to only be so big; the number of maximum slides.
+	Touch_ObjectsTouched.resize(MaxSlides)
 
 #####################################################################################################
 #										UNHANDLED INPUT												#
@@ -387,6 +426,7 @@ func _ready():
 #	is currently using the mouse, this function will not run. When the GUI node is gone/minimized/no longer
 #	there, the input will be handled here.
 func _unhandled_input(ev):
+	
 	#############
 	#	MOUSE	#
 	#############
@@ -439,7 +479,7 @@ func _unhandled_input(ev):
 			#Apply the x axis rotation to the camera.
 			#	And this is rotating _just_ the camera only, up and down on its local X axis.
 			Node_Camera3D.rotate_x(-Final_Cam_Rot_Local_X * PI / 180.0)
-	
+		
 #################################################################################################################################################################
 #																			PHYSICS																				#
 #################################################################################################################################################################
@@ -448,6 +488,40 @@ func _physics_process(delta):
 	#												GET INFO										   #
 	####################################################################################################
 	#First, it is important that we get info on what is happening to our character.
+	
+	#####################################
+	#		IF TOUCH FUNCTION			#
+	#####################################
+#	#Go through each slide collision...
+#	for Slide in range(get_slide_count()):
+#		#If any object we are touching has a "touch" function.
+#		if(get_slide_collision(Slide).collider.has_method("Touched_Function")):
+#			#And if the array doesn't already have this object...
+#			if(not Touch_ObjectsTouched.has(get_slide_collision(Slide).collider)):
+#				#Append that object's id to the end of the "touched objects" array. 
+#				Touch_ObjectsTouched.append(get_slide_collision(Slide).collider)
+#				#Then, use that touch function.
+#				get_slide_collision(Slide).collider.Touched_Function()
+#				#And set the "is_touched" variable inside that object's script to true.
+#				Touch_ObjectsTouched[Slide].set("Is_Being_Touched", true)
+#		#Otherwise, if the collider doesn't have a touch function...
+#		#TODO: Make it to where we only do all this when there is stuff actually to clear in the array.
+#		else:
+#			#Go through each object that had a touched function and say that it isn't being touched anymore.
+#			for x in range(Touch_ObjectsTouched.size()):
+#				#If the array index we are search isn't null...
+#				if(not Touch_ObjectsTouched[x] == null):
+#					#And if that object in the array at the specified index has a "Is_Being_Touched" variable...
+#					if(Touch_ObjectsTouched[x].get("Is_Being_Touched")):
+#						#Set that variable to "false", as it is no longer being touched.
+#						Touch_ObjectsTouched[x].set("Is_Being_Touched", false)
+#
+#				Debug_Label_String = "Array size == " + str(Touch_ObjectsTouched.size())
+#			#Clear the array.
+#			Touch_ObjectsTouched.clear()
+#			#Then resize the array to the max slides again, so each appened doesn't keep making it bigger..
+#			Touch_ObjectsTouched.resize(MaxSlides)
+			
 	
 	#####################################
 	#			STATE_ONFLOOR			#
@@ -461,33 +535,37 @@ func _physics_process(delta):
 	#	GET ROTATION-DIRECTION NORMALS	#
 	#####################################
 	#Get the direction the player is facing in normalized vectors.
-	#	Look at the first example, which is commented out as it is unessecary; the one that says "Example of manual code:" below
-	#	Notice the first variable in the "DirectionInNormalVec3_FWAndBW" 3D vector.
-	#	As you can see, it says "sin(get_rotation().y)". What does this mean?
-	#	Break down this formula into the simpiliest parts you can. This is the foundation of all programming
-	#		and mathematics. This is how people throughout history have figured things out, even complicated problems.
+	#	Look at the first example, which is commented out as it is unessecary; the one that says "Example of manual code:" below.
+	#		Notice the first variable in the "DirectionInNormalVec3_FWAndBW" 3D vector.
+	#		As you can see, it has "sin(get_rotation().y)" in it. What does this mean?
+	#	Break down this formula into the simpiliest parts you can. Breaking things down to it's simpilest parts is the basis of all sciences.
+	#		This is how people throughout history have figured things out, even complicated problems.
 	#	So, according to this philosophy, "sin(get_rotation().y)" is 3 parts: a "sin()" sine function, a "get_rotation()"
 	#		function, and the "y" variable of that "get_rotation()" function.
 	#	So that means that "get_rotation().y" gets the global rotation of the node that this script is currently attached to.
-	#	This variable is in degrees. Let's say the character is looking straight ahead according to global space.
-	#		I.e. "get_rotation().y == 0"
+	#	"get_rotation().y" is in radians. Let's say the character is looking straight ahead according to global space.
+	#		That is, "get_rotation().y" equals "0".
 	#	So, now that we have that, find the sine of that number. This also equals 0.
-	#	This is a hard-to-understand thing for begginers, but is not complicated.
-	#	It's just one of those things that are difficult to get into your brain, but once it's there you've got it.
-	#	So what does that mean? The "0" in the sine function tells us how much the character is looking along the X axis.
-	#	It says "0" because we are not looking along the X axis at all, but we are actually looking along the Y axis,
-	#		according to global space. But, if we were looking 90 degrees left relative to that, our result would be "-1",
-	#		because we are looking along the -X axis in global space.
+	#		This is a hard-to-understand thing for begginers, but it's not complicated.
+	#		It's just one of those things that are difficult to get into your brain, but once it's there you've got it.
+	#	So what does that result mean? Practically speaking, the "0" in the sine function tells us how much the character is
+	#		looking along the X axis.
+	#	It says "0" because we are not looking along the X axis at all, but we are actually looking along the Y axis
+	#		according to global space. But, if we were looking 90 degrees right in global space, our result would be "1",
+	#		because we are completely looking along the positive X axis in global space. We are not facing N or S, but E.
 	#	Now remember, this is all done in radians, as they are faster in computers because they are native to mathematics.
 	#	So when I mentioned degrees, it was simply for your easy understanding. 
-	#	Let's say we are looking 45 degrees to the right. This is ~0.7853r (look up how to convert degrees to radians and
+	#	Let's say we are looking 45 degrees to the right. This is ~0.7853rads (look up how to convert degrees to radians and
 	#		vice versa). The sine of that ("sin(0.7853)") is about "0.7070". This means we are looking along the +X axis about 70%.
-	#	Then you do this with the other axies according to the function that you should use (sin() or cos(); look at the function).
+	#	Then you do this with the other axies according to the function that you should use (sin() or cos()).
 	#	This way, when we add velocity to the character, the velocity will be multiplied 0.7070 along the X axis, and he will
 	#		we walking straight relative to the player direction. If you didn't do this, when you press forward it will be according
 	#		to global space, and it will not take into account the direction the player is facing.
 	#	This is triginometry, and you'll have to look elsewhere for a tutorial or information on that, as this comment is too long
-	#		as it is.
+	#		as it is. And I don't think it's very clear, either.
+	#	Remember that this is trigonometry, so you have to think in 90 degree (right) angles.
+	#	Basically, the sine of an angle is how long the opposite side is compared to the hypotenuse. Go find some pictures related to 
+	#		trigonometry.
 	#Example of manual code:
 	#DirectionInNormalVec3_FWAndBW = Vector3(sin(get_rotation().y), 0, cos(get_rotation().y))
 	#DirectionInNormalVec3_LeftAndRight = Vector3(cos(get_rotation().y),0,sin(get_rotation().y))
@@ -512,13 +590,13 @@ func _physics_process(delta):
 	Pressed_RIGHT = Input.is_action_pressed(String_Right)
 	
 	#If a movement key is pressed...
-	if(Pressed_FW or Pressed_BW or Pressed_LEFT or Pressed_RIGHT):
+	if((Pressed_FW and Pressed_LEFT) or (Pressed_FW and Pressed_RIGHT) or (Pressed_BW and Pressed_LEFT) or (Pressed_BW and Pressed_RIGHT)):
 		#Say that it is in this bool.
-		State_MovementPressed = true
+		State_Movement_Diagonal_Pressed = true
 	#Otherwise, if it isn't...
 	else:
 		#Say that it is not.
-		State_MovementPressed = false
+		State_Movement_Diagonal_Pressed = false
 
 	#########################
 	#			JUMP		#
@@ -667,10 +745,12 @@ func _physics_process(delta):
 	#########################
 	#	ADD X AND Z AXIS	#
 	#########################
+	#First, reset the final move velocity, just in case.
+	FinalMoveVel = Vector3(0.0, 0.0, 0.0)
 	#If the character is moving diagonally...
-	if(Pressed_FW and Pressed_LEFT or Pressed_FW and Pressed_RIGHT or Pressed_BW and Pressed_LEFT or Pressed_BW and Pressed_RIGHT):
+	if(State_Movement_Diagonal_Pressed):
 		#Set the final move velocity vector according to the crest factor.
-		FinalMoveVel=(TempMoveVel_FWAndBW + TempMoveVel_LeftAndRight) / 1.414213562373095
+		FinalMoveVel=(TempMoveVel_FWAndBW + TempMoveVel_LeftAndRight) / CrestFactor
 	#Otherwise, if he is simply moving on one relative axis...
 	else:
 		#Set the final move velocity.
@@ -709,7 +789,7 @@ func _physics_process(delta):
 		Falling_StartTime = 0
 		#Set the current falling time to "now."
 		Falling_CurrentTime = 0
-		
+	
 	#########################################
 	#				JUMP PRESSED			#
 	#########################################
@@ -804,7 +884,6 @@ func _physics_process(delta):
 	#########################################
 	#If our character is falling...
 	if(State_Falling):
-		var dotpro = 1.0
 		#And if he's not jumping...
 		if(not State_Jumping):
 			#If not on floor...
@@ -829,12 +908,62 @@ func _physics_process(delta):
 				if(FinalMoveVel.x != 0 or FinalMoveVel.z != 0):
 					#If there is an actual slide collision...
 					if(get_slide_count() >= 1):
-						#Get the first slide and see if it's a floor...
-						#TODO: Should I loop through all slides? I've done this before but it wouldn't go up
-						#	steps properly.
-						if((acos(get_slide_collision(0).normal.y)) < MaxFloorAngleRad):
-							#Set the speed multiplier according to the steepness of the slope.
-							Falling_Speed_Multiplier = acos(get_slide_collision(0).normal.y)/MaxFloorAngleRad
+						#Get the first slide.
+						for slide in range(get_slide_count()):
+							#If it is a floor...
+							if((acos(get_slide_collision(slide).normal.y)) < MaxFloorAngleRad):
+								#The code in this section makes the character walk more slowly up hills and faster down them.
+								#	It also makes the character not affected so much by gravity when walking parallel on the ramp.
+								#	So if the character is walking from one side of the ramp to the other, the character isn't
+								#	being pulled down so much.
+								
+								#Setup the X and Z axis of the floor normal as a 2D vector for calculations.
+								Slope_FloorNor2D = Vector2(get_slide_collision(slide).normal.x, get_slide_collision(slide).normal.z)
+								
+								#Filter out any floor normal that is less than a certain threshold...
+								#	This is here because a perfectly level floor will still have a normal of something very small.
+								#	I don't know why this is. Probably a rounding error or something. Games can't have perfect accuracy, because
+								#	it would slow things down too much if it did.
+								#Maybe this isn't really needed?
+								#If the floors y normal is straight up, practically speaking...
+								if((abs(get_slide_collision(slide).normal.y) >= 0.9999999)):
+									#Make the floor normals 0.
+									Slope_FloorNor2D = Vector2(0.0, 0.0)
+								
+								#If the player is moving the character diagonally...
+								if(State_Movement_Diagonal_Pressed):
+									#Setup the temporary player velocity vector, taking into account the crest factor.
+									Slope_PlayerVelVec2D = Vector2(((TempMoveVel_FWAndBW.x / FinalWalkVelocity) + (TempMoveVel_LeftAndRight.x/FinalWalkVelocity)) / CrestFactor ,
+															((TempMoveVel_FWAndBW.z / FinalWalkVelocity) + (TempMoveVel_LeftAndRight.z/FinalWalkVelocity)) / CrestFactor)
+								#Otherwise, he is not moving diagonally, so...
+								else:
+									#Setup the temporary velocity vector.
+									Slope_PlayerVelVec2D = Vector2(((TempMoveVel_FWAndBW.x / FinalWalkVelocity) + (TempMoveVel_LeftAndRight.x/FinalWalkVelocity)) ,
+															((TempMoveVel_FWAndBW.z / FinalWalkVelocity) + (TempMoveVel_LeftAndRight.z/FinalWalkVelocity)))
+								
+								#Find out the current magnitude of the x and z axis of the floor normal, so we can calculate it as if it were stand straight up (as if normal.y == 0.0)
+								Slope_Magnitude = sqrt( pow( abs(Slope_FloorNor2D.x) , 2) + pow( abs(Slope_FloorNor2D.y) , 2))
+								#If the magnitude of the slope isn't 0 (to avoid a "can't divide by 0" error)...
+								if(Slope_Magnitude != 0):
+									#Get the ratio that we need to multiply the shortened 2D vector by to get a full vector.
+									Slope_MagnitudeRatio = 1/Slope_Magnitude
+								#Otherwise, if the slope vector magnitude IS 0...
+								else:
+									#Just make the magnitude ratio 0.
+									Slope_MagnitudeRatio = 0
+								
+								#Get the dot product of the slope's normal, normalized to what it would be if it where standing stright up (if the y normal was 0.0), to 
+								#	the player's current velocity direction. Basically, find out which direction and by how much the lpayer is moving relative to the ramp.
+								#	Is he moving up the ramp at a 45 degree angle? Or is he moving parrallel to the ramp? This will find out.
+								Slope_DotProduct = Vector2( Slope_FloorNor2D.x*Slope_MagnitudeRatio , Slope_FloorNor2D.y*Slope_MagnitudeRatio ).dot(Slope_PlayerVelVec2D)
+								
+								#If the player is going down the ramp...
+								if(Slope_DotProduct > 0):
+									#Multiply the dot product by a certain amount, so as to make the falling speed stronger, so the character doesn't "step" down the ramp as if it where stairs.
+									Slope_DotProduct *= 2
+								
+								#Finally, setup the falling speed multiplier.
+								Falling_Speed_Multiplier = lerp(Falling_Speed_Multiplier_Default, 1.0, pow( acos(get_slide_collision(slide).normal.y)/MaxFloorAngleRad , 4) * abs(Slope_DotProduct))
 				#Otherwise, if the player is not moving...
 				else:
 					#Set the falling speed multiplier to the default specified in the settings.
@@ -843,25 +972,24 @@ func _physics_process(delta):
 				#Set the final falling speed multiplier.
 				Falling_Speed = Falling_Gravity * Falling_Speed_Multiplier
 				
-				#Debug_Label_String = str(Falling_Speed)
-				
 			#Apply final falling velocity.
 			FinalMoveVel.y = -Falling_Speed
 	
 	#####################################################################################################
 	#									FINAL MOVEMENT APPLICATION										#
 	#####################################################################################################
+	#Debug_Label_String = "Falling_Speed_Multiplier = " + str(Falling_Speed_Multiplier)
 	#If character is on floor...
 	if(State_OnFloor):
 		#Move and slide the character with the character velocity vector, as well as with the floor velocity vector added on it.
 		#	The reason I am using move_and_slide() is because if the character hits a wall while on a platform, he will
 		#	slide appropriately.
 		FinalMoveVel += get_floor_velocity()*delta
-		move_and_slide(FinalMoveVel, FloorNormal, SlopeStopMinVel, 4, MaxFloorAngleRad)
+		move_and_slide(FinalMoveVel, FloorNormal, SlopeStopMinVel, MaxSlides, MaxFloorAngleRad)
 	#If the character is NOT on a floor...
 	else:
 		#Apply the movement calculations with move_and_slide().
-		move_and_slide(FinalMoveVel, FloorNormal, SlopeStopMinVel, 4, MaxFloorAngleRad)
+		move_and_slide(FinalMoveVel, FloorNormal, SlopeStopMinVel, MaxSlides, MaxFloorAngleRad)
 	
 	#########################################
 	#				GET STATES				#
@@ -985,10 +1113,10 @@ func _physics_process(delta):
 	if(CamInterpo_DoInterpolation == true):
 		#Do the camera interpolation and return the modified interpolation time.
 		CamInterpo_CurrentTime_Secs = InterpolateCamera(CamInterpo_StartingPos_Local_Y, CamInterpo_TargetPos_Local_Y, CamInterpo_CurrentTime_Secs, delta)
-	
+
 	#############################
 	#			DEBUG			#
 	#############################
 	#This is all just debug stuff.
-	#Debug_Label_String = "FPS = " + str(Engine.get_frames_per_second())
+	Debug_Label_String = "FPS: " + str(Engine.get_frames_per_second())
 	Debug_Label.set_text(Debug_Label_String)

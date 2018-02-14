@@ -1,17 +1,16 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://scripts/Player.gd" type="Script" id=1]
-[ext_resource path="res://scripts/Init_Script.gd" type="Script" id=2]
-[ext_resource path="res://textures/crosshair.png" type="Texture" id=3]
-[ext_resource path="res://textures/crosshair_usable.png" type="Texture" id=4]
-[ext_resource path="res://fonts/Almanack/rm_almanack.ttf" type="DynamicFontData" id=5]
+[ext_resource path="res://textures/crosshair.png" type="Texture" id=2]
+[ext_resource path="res://textures/crosshair_usable.png" type="Texture" id=3]
+[ext_resource path="res://fonts/Almanack/rm_almanack.ttf" type="DynamicFontData" id=4]
 
-[sub_resource type="CapsuleShape" id=2]
+[sub_resource type="CapsuleShape" id=1]
 
 radius = 0.2
 height = 1.4
 
-[sub_resource type="ArrayMesh" id=4]
+[sub_resource type="ArrayMesh" id=2]
 
 resource_name = "Plane"
 blend_shape_mode = 1
@@ -81,15 +80,15 @@ proximity_fade_enable = false
 distance_fade_enable = false
 _sections_unfolded = [ "Albedo", "Roughness" ]
 
-[sub_resource type="DynamicFont" id=5]
+[sub_resource type="DynamicFont" id=4]
 
 size = 32
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 5 )
+font_data = ExtResource( 4 )
 _sections_unfolded = [ "Extra Spacing", "Font", "Settings" ]
 
-[node name="Player" type="KinematicBody" index="0"]
+[node name="Player" type="KinematicBody"]
 
 input_ray_pickable = true
 input_capture_on_drag = false
@@ -101,17 +100,16 @@ axis_lock_linear_z = false
 axis_lock_angular_x = false
 axis_lock_angular_y = false
 axis_lock_angular_z = false
-collision/safe_margin = 0.001
+collision/safe_margin = 0.01
 script = ExtResource( 1 )
+_sections_unfolded = [ "collision" ]
 
 [node name="Init_Script" type="Spatial" parent="." index="0"]
-
-script = ExtResource( 2 )
 
 [node name="CollisionShape" type="CollisionShape" parent="." index="1"]
 
 transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, 0, 0, 0 )
-shape = SubResource( 2 )
+shape = SubResource( 1 )
 disabled = false
 _sections_unfolded = [ "Transform" ]
 
@@ -126,7 +124,7 @@ lod_min_distance = 0.0
 lod_min_hysteresis = 0.0
 lod_max_distance = 0.0
 lod_max_hysteresis = 0.0
-mesh = SubResource( 4 )
+mesh = SubResource( 2 )
 skeleton = NodePath("..")
 material/0 = SubResource( 3 )
 _sections_unfolded = [ "material" ]
@@ -145,7 +143,7 @@ current = false
 fov = 70.0
 size = 1.0
 near = 0.05
-far = 100.0
+far = 256.0
 _sections_unfolded = [ "Transform", "Visibility" ]
 
 [node name="HUD" type="Control" parent="." index="4"]
@@ -205,7 +203,7 @@ mouse_filter = 2
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 1
-texture = ExtResource( 3 )
+texture = ExtResource( 2 )
 expand = true
 stretch_mode = 0
 _sections_unfolded = [ "Anchor", "Mouse", "Rect" ]
@@ -226,7 +224,7 @@ mouse_filter = 2
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 1
-texture = ExtResource( 4 )
+texture = ExtResource( 3 )
 expand = true
 stretch_mode = 0
 _sections_unfolded = [ "Mouse", "Rect" ]
@@ -261,7 +259,7 @@ mouse_filter = 2
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 4
-custom_fonts/font = SubResource( 5 )
+custom_fonts/font = SubResource( 4 )
 custom_colors/font_color = Color( 0, 0, 0, 1 )
 text = "-------"
 percent_visible = 1.0
@@ -276,8 +274,8 @@ anchor_left = 0.0
 anchor_top = 0.0
 anchor_right = 0.0
 anchor_bottom = 0.0
-margin_right = 256.0
-margin_bottom = 64.0
+margin_right = 384.0
+margin_bottom = 128.0
 rect_pivot_offset = Vector2( 0, 0 )
 mouse_filter = 2
 mouse_default_cursor_shape = 0
