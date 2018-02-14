@@ -426,7 +426,6 @@ func _ready():
 #	is currently using the mouse, this function will not run. When the GUI node is gone/minimized/no longer
 #	there, the input will be handled here.
 func _unhandled_input(ev):
-	
 	#############
 	#	MOUSE	#
 	#############
