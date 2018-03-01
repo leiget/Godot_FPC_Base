@@ -1,9 +1,12 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=12 format=2]
 
 [ext_resource path="res://scripts/Player.gd" type="Script" id=1]
-[ext_resource path="res://textures/crosshair.png" type="Texture" id=2]
-[ext_resource path="res://textures/crosshair_usable.png" type="Texture" id=3]
-[ext_resource path="res://fonts/Almanack/rm_almanack.ttf" type="DynamicFontData" id=4]
+[ext_resource path="res://textures/HUD/crosshair.png" type="Texture" id=2]
+[ext_resource path="res://scripts/GUI_Elements/Crosshair.gd" type="Script" id=3]
+[ext_resource path="res://textures/HUD/crosshair_usable.png" type="Texture" id=4]
+[ext_resource path="res://scripts/GUI_Elements/DEBUG.gd" type="Script" id=5]
+[ext_resource path="res://fonts/Almanack/rm_almanack.ttf" type="DynamicFontData" id=6]
+[ext_resource path="res://scripts/GUI_Elements/Debug_Label.gd" type="Script" id=7]
 
 [sub_resource type="CapsuleShape" id=1]
 
@@ -85,10 +88,10 @@ _sections_unfolded = [ "Albedo", "Roughness" ]
 size = 32
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 4 )
+font_data = ExtResource( 6 )
 _sections_unfolded = [ "Extra Spacing", "Font", "Settings" ]
 
-[node name="Player" type="KinematicBody"]
+[node name="Player" type="KinematicBody" index="0"]
 
 input_ray_pickable = true
 input_capture_on_drag = false
@@ -102,7 +105,7 @@ axis_lock_angular_y = false
 axis_lock_angular_z = false
 collision/safe_margin = 0.01
 script = ExtResource( 1 )
-_sections_unfolded = [ "collision" ]
+_sections_unfolded = [ "Transform", "Visibility", "collision" ]
 
 [node name="Init_Script" type="Spatial" parent="." index="0"]
 
@@ -146,25 +149,10 @@ near = 0.05
 far = 256.0
 _sections_unfolded = [ "Transform", "Visibility" ]
 
-[node name="HUD" type="Control" parent="." index="4"]
+[node name="Camera2D" type="Camera2D" parent="." index="4"]
 
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
-margin_right = 1360.0
-margin_bottom = 768.0
-rect_pivot_offset = Vector2( 0, 0 )
-mouse_filter = 2
-mouse_default_cursor_shape = 0
-size_flags_horizontal = 1
-size_flags_vertical = 1
-_sections_unfolded = [ "Mouse", "Rect" ]
-
-[node name="Camera2D" type="Camera2D" parent="HUD" index="0"]
-
-position = Vector2( 680, 384 )
-anchor_mode = 1
+z_index = 128
+anchor_mode = 0
 rotating = false
 current = false
 zoom = Vector2( 1, 1 )
@@ -173,8 +161,8 @@ limit_top = -10000000
 limit_right = 10000000
 limit_bottom = 10000000
 limit_smoothed = false
-drag_margin_h_enabled = true
-drag_margin_v_enabled = true
+drag_margin_h_enabled = false
+drag_margin_v_enabled = false
 smoothing_enabled = false
 smoothing_speed = 5.0
 offset_v = 0.0
@@ -186,19 +174,20 @@ drag_margin_bottom = 0.2
 editor_draw_screen = true
 editor_draw_limits = false
 editor_draw_drag_margin = false
-_sections_unfolded = [ "Transform" ]
+_sections_unfolded = [ "Limit", "Transform", "Z Index" ]
 
-[node name="Crosshair" type="TextureRect" parent="HUD/Camera2D" index="0"]
+[node name="Crosshair" type="TextureRect" parent="Camera2D" index="0"]
 
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-margin_left = -48.0
-margin_top = -48.0
-margin_right = -16.0
-margin_bottom = -16.0
+margin_left = -32.0
+margin_top = 430.0
+margin_right = 224.0
+margin_bottom = 686.0
 rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
 mouse_filter = 2
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
@@ -206,30 +195,31 @@ size_flags_vertical = 1
 texture = ExtResource( 2 )
 expand = true
 stretch_mode = 0
+script = ExtResource( 3 )
 _sections_unfolded = [ "Anchor", "Mouse", "Rect" ]
 
-[node name="Crosshair_Useable" type="TextureRect" parent="HUD/Camera2D/Crosshair" index="0"]
+[node name="Crosshair_Useable" type="TextureRect" parent="Camera2D/Crosshair" index="0"]
 
-visible = false
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
-margin_left = -4.0
-margin_top = -4.0
-margin_right = 36.0
-margin_bottom = 36.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -128.0
+margin_top = -128.0
+margin_right = 128.0
+margin_bottom = 128.0
 rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
 mouse_filter = 2
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 1
-texture = ExtResource( 3 )
+texture = ExtResource( 4 )
 expand = true
 stretch_mode = 0
-_sections_unfolded = [ "Mouse", "Rect" ]
+_sections_unfolded = [ "Anchor", "Margin", "Mouse", "Rect" ]
 
-[node name="DEBUG" type="Control" parent="HUD/Camera2D" index="1"]
+[node name="DEBUG" type="Control" parent="Camera2D" index="1"]
 
 anchor_left = 0.0
 anchor_top = 0.0
@@ -238,50 +228,53 @@ anchor_bottom = 0.0
 margin_right = 40.0
 margin_bottom = 40.0
 rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
 mouse_filter = 2
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 1
+script = ExtResource( 5 )
 _sections_unfolded = [ "Mouse" ]
 
-[node name="Debug_Label" type="Label" parent="HUD/Camera2D/DEBUG" index="0"]
+[node name="Debug_Label" type="Label" parent="Camera2D/DEBUG" index="0"]
 
 anchor_left = 0.0
 anchor_top = 0.0
 anchor_right = 0.0
 anchor_bottom = 0.0
-margin_left = -680.0
-margin_top = -384.0
-margin_right = -424.0
-margin_bottom = -320.0
+margin_right = 256.0
+margin_bottom = 64.0
 rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
 mouse_filter = 2
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 4
 custom_fonts/font = SubResource( 4 )
-custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_colors/font_color = Color( 1, 1, 1, 1 )
 text = "-------"
 percent_visible = 1.0
 lines_skipped = 0
 max_lines_visible = -1
-_sections_unfolded = [ "Mouse", "Rect", "Visibility", "custom_fonts" ]
+script = ExtResource( 7 )
+_sections_unfolded = [ "Mouse", "Rect", "Visibility", "custom_colors", "custom_fonts" ]
 
-[node name="Debug_Label_BG" type="ColorRect" parent="HUD/Camera2D/DEBUG/Debug_Label" index="0"]
+[node name="Debug_Label_BG" type="ColorRect" parent="Camera2D/DEBUG/Debug_Label" index="0"]
 
 show_behind_parent = true
 anchor_left = 0.0
 anchor_top = 0.0
 anchor_right = 0.0
 anchor_bottom = 0.0
-margin_right = 384.0
-margin_bottom = 128.0
+margin_right = 193.0
+margin_bottom = 712.0
 rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
 mouse_filter = 2
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 1
-color = Color( 1, 1, 1, 1 )
+color = Color( 0, 0, 0, 1 )
 _sections_unfolded = [ "Mouse", "Rect", "Visibility" ]
 
 

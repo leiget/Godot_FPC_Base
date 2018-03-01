@@ -17,7 +17,7 @@ void fragment()
 render_priority = 0
 shader = SubResource( 1 )
 
-[node name="Coll_Sphere" type="ImmediateGeometry" index="0"]
+[node name="Coll_Sphere" type="ImmediateGeometry"]
 
 layers = 1
 material_override = SubResource( 2 )

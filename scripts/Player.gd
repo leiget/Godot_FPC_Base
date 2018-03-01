@@ -2,11 +2,15 @@
 #				TODO					#
 #########################################
 #- Make it to where if a ramp is too steep, don't let the character run up it at all in the first place.
-#- Make the stepping algorithim better when running parralel along a step.
 #- Check shaking of character when on a moving platform.
-#- Maybe I need to change the order in which things work? That is, change the order of jumping, falling, moving, etc.
-#	- I might need to put all of the "for Slide in range(get_slide_count()):" loops together, so it doesn't have to loop through them all several times.
-#	  That would take a lot of time. And I'm not sure it would work. I'll just ahve to see.
+#- Ladders?
+#- The second to last thing I need to do is create a seperate, optimized version of this script.
+#	- This script will be for teaching, and the optimized script will be for actual use.
+#	- I don't know if I will actually teach how to optimize the script, in the wiki/manual. I'll ahve to see.
+#	- Maybe I need to change the order in which things work? That is, change the order of jumping, falling, moving, etc.
+#		- I might need to put all of the "for Slide in range(get_slide_count()):" loops together, so it doesn't have to loop through them all several times.
+#	  		That would take a lot of time. And I'm not sure it would work. I'll just have to see.
+#- Lastly: make documentation for everything.
 
 #########################################
 #				NOTES					#
@@ -45,7 +49,7 @@ signal RenderColl(Coll_Vec3)
 #	It takes the vector you want the ray to go to.
 signal RayCast_Line(RayTo_Vec3)
 #Signal for showing red collision spheres.
-signal Coll_Sphere_Show(Pos_Vec3)
+signal Coll_Sphere_Show(SlideNumber, Pos_Vec3)
 
 #########################
 #		NODES			#
@@ -53,10 +57,10 @@ signal Coll_Sphere_Show(Pos_Vec3)
 #The 3D camera node.
 onready var Node_Camera3D = get_node("Camera_Main")
 #The "Crosshair_Usable" red circle node.
-onready var Node_Crosshair_Useable = get_node("HUD/Camera2D/Crosshair/Crosshair_Useable")
+onready var Node_Crosshair_Useable = get_node("Camera2D/Crosshair/Crosshair_Useable")
 #	Label	#
 #The top-most label, for debugging.
-onready var Debug_Label = get_node("HUD/Camera2D/DEBUG/Debug_Label")
+onready var Debug_Label = get_node("Camera2D/DEBUG/Debug_Label")
 #Label_01 print string.
 var Debug_Label_String = "-------------------"
 
@@ -103,7 +107,14 @@ var Step_MaxHeight = 0.5
 #The additional amount that character has to move up when stepping up a step.
 #	This helps keep the character from getting stuck moving up and down because he can't get quite enough
 #	height to get over the step.
-var Step_SafetyMargin = 0.05
+#It's set according to how fast the player is moving, so that the stepping of stairs is more correct.
+var Step_SafetyMargin = 0.2/BaseWalkVelocity
+#Amount to let slopes affect gravity of the player character, and therefore speed movement speed when walking up them.
+#Default is 0.2.
+var Slope_EffectMultiplier_ClimbingUp = 0.2
+#Amount to let slopes affect gravity of the player character, and therefore speed movement speed when walking down them.
+#Default is 1.5.
+var Slope_EffectMultiplier_ClimbingDown = 1.5
 
 #########################
 #		STATES			#
@@ -120,7 +131,7 @@ var State_Jumping = false
 var State_Movement_Diagonal_Pressed = false
 
 #########################################
-#		LOCALLY GLOBAL VARIABLES		#
+#			GLOBAL VARIABLES			#
 #########################################
 #These may not be used, but they could be useful at a future date with new code.
 #The global position of the player.
@@ -130,6 +141,8 @@ var Player_Position = Vector3(0,0,0)
 onready var Player_Height = (get_node("CollisionShape").shape.height + get_node("CollisionShape").shape.radius * 2)
 #The global Y position of the feet of the player, for stepping up steps.
 onready var Player_GlobalFeetPos_Y = Player_Position.y - Player_Height/2
+#The position of the use buttons ray intersection.
+var Use_Ray_IntersectPos = Vector3(0,0,0)
 
 #########################
 #		  INPUT     	#
@@ -140,7 +153,6 @@ var Pressed_BW = false
 var Pressed_LEFT = false
 var Pressed_RIGHT = false
 var Pressed_Jump = false
-var Pressed_Use_Released = true
 var Pressed_Shift = false
 #The input names in string format.
 var String_FW = "Player_FW"
@@ -243,6 +255,17 @@ var Step_CollPos = Vector3(0.0, 0.0, 0.0)
 #	the player, and therefore deeper into the step, so as to make sure the ray cast downward from that postion
 #	actually hits the step. I have found it unreliable to not do this.
 var Step_CollPos_RelToPlayer = Vector3(0.0, 0.0, 0.0)
+#The position of the step before the player moved up it. This is for the camera interpolation.
+#	I put it here because it still has something to do with the stepping up itself.
+var Step_PosBefore = Vector3(0,0,0)
+#The following are for making sure the player doesn't try to move up a step when he's too parallel to it,
+#	thus causing him to move up and slide back down because he can't quite get on the step.
+#The direction the player is moving, normalized.
+var Step_PlayerVel_Global_Norm = Vector3(0,0,0)
+#The slide collision relative to the player.
+var Step_CollPos_Global_RelToPlayer = Vector3(0,0,0)
+#The angle between the player and the slide collision.
+var Step_CollPos_AngleToPlayer = 0.0
 
 #########################
 #		ROTATION		#
@@ -392,12 +415,6 @@ func _ready():
 	#Say that the jump button is not pressed.
 	Jump_Released = true
 	
-	#This just makes sure that if the player is pressing the jump button when starting the scene or level
-	#	he doesn't just keep jumping. Or, who knows, maybe some other crazy thing will happen.
-	#	It's the responsibility of the game desinger and programmer to code for all possiblities so as to
-	#	have stable code. Even little things like this can make a difference.
-	Pressed_Use_Released = false
-	
 	#Set the initial player position variable.
 	#	Later on in this code, this variable is set before it is used, anyway. But I like to have this here
 	#	as it doesn't cause slowdown or overhead and I may change the code or reference this before that code
@@ -415,8 +432,7 @@ func _ready():
 	#Set the default label text
 	Debug_Label.set_text(Debug_Label_String)
 	
-	#Setup the array size of possible touched objects as the max number of slides, as this will
-	#allow the list to only be so big; the number of maximum slides.
+	#
 	Touch_ObjectsTouched.resize(MaxSlides)
 
 #####################################################################################################
@@ -439,14 +455,8 @@ func _unhandled_input(ev):
 			#Here everything is calculated before it is actually applied.
 			
 			#	LEFT and RIGHT	#
-			#Set how much the mouse has moved from its last position on the x axis.
-			#	Also, multiply that amount by the sensitivity setting, in the SETTINGS section
-			#	at the top of this script.
-			Mouse_Rel_Movement.x = ev.relative.x * Cam_RotateSens
-			#	UP AND DOWN	 #
-			#Set how much the mouse has moved from its last position on the y axis.
-			#Also multiply by the camera sensitivity.
-			Mouse_Rel_Movement.y = ev.relative.y * Cam_RotateSens
+			#Set how much the mouse has moved from its last position.
+			Mouse_Rel_Movement = ev.relative
 			
 			#Find out what the current local X rotation is of the camera itself.
 			Cam_Local_Rot_X = Node_Camera3D.get_rotation().x*(180/PI)
@@ -474,10 +484,10 @@ func _unhandled_input(ev):
 			
 			#Apply the y axis rotation to the character kinematic body.
 			#	This means rotate the whole character left and right.
-			self.rotate_y(-Mouse_Rel_Movement.x * PI / 180.0)
+			self.rotate_y((-Mouse_Rel_Movement.x * PI / 180.0) * Cam_RotateSens)
 			#Apply the x axis rotation to the camera.
 			#	And this is rotating _just_ the camera only, up and down on its local X axis.
-			Node_Camera3D.rotate_x(-Final_Cam_Rot_Local_X * PI / 180.0)
+			Node_Camera3D.rotate_x((-Final_Cam_Rot_Local_X * PI / 180.0) * Cam_RotateSens)
 		
 #################################################################################################################################################################
 #																			PHYSICS																				#
@@ -487,40 +497,6 @@ func _physics_process(delta):
 	#												GET INFO										   #
 	####################################################################################################
 	#First, it is important that we get info on what is happening to our character.
-	
-	#####################################
-	#		IF TOUCH FUNCTION			#
-	#####################################
-#	#Go through each slide collision...
-#	for Slide in range(get_slide_count()):
-#		#If any object we are touching has a "touch" function.
-#		if(get_slide_collision(Slide).collider.has_method("Touched_Function")):
-#			#And if the array doesn't already have this object...
-#			if(not Touch_ObjectsTouched.has(get_slide_collision(Slide).collider)):
-#				#Append that object's id to the end of the "touched objects" array. 
-#				Touch_ObjectsTouched.append(get_slide_collision(Slide).collider)
-#				#Then, use that touch function.
-#				get_slide_collision(Slide).collider.Touched_Function()
-#				#And set the "is_touched" variable inside that object's script to true.
-#				Touch_ObjectsTouched[Slide].set("Is_Being_Touched", true)
-#		#Otherwise, if the collider doesn't have a touch function...
-#		#TODO: Make it to where we only do all this when there is stuff actually to clear in the array.
-#		else:
-#			#Go through each object that had a touched function and say that it isn't being touched anymore.
-#			for x in range(Touch_ObjectsTouched.size()):
-#				#If the array index we are search isn't null...
-#				if(not Touch_ObjectsTouched[x] == null):
-#					#And if that object in the array at the specified index has a "Is_Being_Touched" variable...
-#					if(Touch_ObjectsTouched[x].get("Is_Being_Touched")):
-#						#Set that variable to "false", as it is no longer being touched.
-#						Touch_ObjectsTouched[x].set("Is_Being_Touched", false)
-#
-#				Debug_Label_String = "Array size == " + str(Touch_ObjectsTouched.size())
-#			#Clear the array.
-#			Touch_ObjectsTouched.clear()
-#			#Then resize the array to the max slides again, so each appened doesn't keep making it bigger..
-#			Touch_ObjectsTouched.resize(MaxSlides)
-			
 	
 	#####################################
 	#			STATE_ONFLOOR			#
@@ -622,10 +598,14 @@ func _physics_process(delta):
 	if(Input.is_action_pressed(String_Shift)):
 		#Multiply the final walk velocity by the speed shift velocity.
 		FinalWalkVelocity = BaseWalkVelocity * ShiftWalkVelocity_Multiplier
+		#And set the step saftey margin according to the player's current speed.
+		Step_SafetyMargin = 0.2/FinalWalkVelocity
 	#Otherwise...
 	else:
 		#Set the final walk velocity as the base velocity.
 		FinalWalkVelocity = BaseWalkVelocity
+		#And set the step saftey margin according to the player's current speed.
+		Step_SafetyMargin = 0.2/FinalWalkVelocity
 	
 	#############################################
 	#			CROSSHAIR: USABLE ITEM			#
@@ -648,41 +628,35 @@ func _physics_process(delta):
 			#Show the red circle over the crosshair.
 			Node_Crosshair_Useable.visible=true
 			#If the player pressed the use button and it was previously released...
-			if(Input.is_action_pressed(String_Use) and Pressed_Use_Released):
+			if(Input.is_action_just_pressed(String_Use)):
+				#Set what the position of the ray intersection is.
+				Use_Ray_IntersectPos = Ray_Result.position
 				#Use the function of the object intersected.
 				Ray_Result.collider.UseFunction()
-				#Say that the use button was not released...
-				Pressed_Use_Released = false
-			#Else if the use button is not being pressed and the "Pressed_Use_Released" variable says that 
-			#	the use button has not been released...
-			elif(not Input.is_action_pressed(String_Use) and not Pressed_Use_Released):
-				#Set it to true; that it has been released.
-				Pressed_Use_Released = true
 		#PARENT#
 		#Else if its parent has a "UseFunction()" function...
 		elif(Ray_Result.collider.get_parent().has_method("UseFunction")):
 			#Show the red circle over the crosshair.
 			Node_Crosshair_Useable.visible=true
 			#If the player pressed the use button and it was previously released...
-			if(Input.is_action_pressed(String_Use) and Pressed_Use_Released):
+			if(Input.is_action_just_pressed(String_Use)):
+				#Set what the position of the ray intersection is.
+				Use_Ray_IntersectPos = Ray_Result.position
 				#Use the function of the object intersected.
 				Ray_Result.collider.get_parent().UseFunction()
-				#Say that the use button was not released...
-				Pressed_Use_Released = false
-			#Else if the use button is not being pressed and the "Pressed_Use_Released" variable says that 
-			#	the use button has not been released...
-			elif(not Input.is_action_pressed(String_Use) and not Pressed_Use_Released):
-				#Set it to true; that it has been released.
-				Pressed_Use_Released = true
 		#NO USE FUNCTION#
 		#Otherwise, if there is not...
 		else:
 			#Hide the red circle.
 			Node_Crosshair_Useable.visible=false
+			#Then reset the ray intersections position.
+			Use_Ray_IntersectPos = Vector3(0,0,0)
 	#Else, if the ray hit nothing...
 	else:
 		#Hide the red circle.
 		Node_Crosshair_Useable.visible=false
+		#Then reset the ray intersections position.
+		Use_Ray_IntersectPos = Vector3(0,0,0)
 	
 	####################################################################################################
 	#										HORIZONTAL MOVEMENT				 						   #
@@ -942,6 +916,7 @@ func _physics_process(delta):
 								
 								#Find out the current magnitude of the x and z axis of the floor normal, so we can calculate it as if it were stand straight up (as if normal.y == 0.0)
 								Slope_Magnitude = sqrt( pow( abs(Slope_FloorNor2D.x) , 2) + pow( abs(Slope_FloorNor2D.y) , 2))
+								
 								#If the magnitude of the slope isn't 0 (to avoid a "can't divide by 0" error)...
 								if(Slope_Magnitude != 0):
 									#Get the ratio that we need to multiply the shortened 2D vector by to get a full vector.
@@ -959,7 +934,12 @@ func _physics_process(delta):
 								#If the player is going down the ramp...
 								if(Slope_DotProduct > 0):
 									#Multiply the dot product by a certain amount, so as to make the falling speed stronger, so the character doesn't "step" down the ramp as if it where stairs.
-									Slope_DotProduct *= 2
+									Slope_DotProduct *= Slope_EffectMultiplier_ClimbingDown
+								#Otherwise, if he is going up the ramp...
+								else:
+									#Multiply the slope's dot product by the slope effect multipler, so that the game designer can say how much he wants the slope to affect the player's walking
+									#	velocity.
+									Slope_DotProduct *= Slope_EffectMultiplier_ClimbingUp
 								
 								#Finally, setup the falling speed multiplier.
 								Falling_Speed_Multiplier = lerp(Falling_Speed_Multiplier_Default, 1.0, pow( acos(get_slide_collision(slide).normal.y)/MaxFloorAngleRad , 4) * abs(Slope_DotProduct))
@@ -977,7 +957,6 @@ func _physics_process(delta):
 	#####################################################################################################
 	#									FINAL MOVEMENT APPLICATION										#
 	#####################################################################################################
-	#Debug_Label_String = "Falling_Speed_Multiplier = " + str(Falling_Speed_Multiplier)
 	#If character is on floor...
 	if(State_OnFloor):
 		#Move and slide the character with the character velocity vector, as well as with the floor velocity vector added on it.
@@ -1014,6 +993,9 @@ func _physics_process(delta):
 			if(State_OnWalls):
 				#Go through each of the collisions.
 				for Slide in range(0, Step_SlideCount):
+					#Emit signal to show collision spheres.
+					emit_signal("Coll_Sphere_Show", Slide, get_slide_collision(Slide).position)
+					
 					#If the slide collision is a wall...
 					if(get_slide_collision(Slide).normal.y <= MaxFloorAngleNor_Y):
 						#Get the position of the collision.
@@ -1024,84 +1006,101 @@ func _physics_process(delta):
 						#	Don't forget the safe margin of the character's physics body!
 						Player_GlobalFeetPos_Y = Player_Position.y - (Player_Height / 2) - get("collision/safe_margin")
 						
-						#Add a little bit to where we will be checking the step normal, to make sure it
-						#	is actually over the step. This is according to what direction the player is moving.
-						Step_CollPos.x = to_global(Step_CollPos_RelToPlayer * Step_RaycastDistMultiplier).x
-						Step_CollPos.y = Player_GlobalFeetPos_Y + Step_MaxHeight
-						Step_CollPos.z = to_global(Step_CollPos_RelToPlayer * Step_RaycastDistMultiplier).z
-						
-						#Emit the signal to render the collision position, for debugging.
-						emit_signal("RenderColl", Step_CollPos)
-						
-						#Setup and execute a raycast at the collision position specified.
-						Ray_SpaceState = get_world().get_direct_space_state()
-						Ray_From = Vector3(Player_Position.x , Step_CollPos.y , Player_Position.z)
-						Ray_To = Step_CollPos
-						Ray_Result = Ray_SpaceState.intersect_ray(Ray_From,Ray_To,[self])
-						
-						#If there is nothing in the way of the character...
-						#	This is here because, say there is a step that is partly above the ground. It's not touching. If the character walks into it,
-						#	and it's within the step size threshold, this code will not allow the ray to be shot from within the step, causing it(the ray cast) to
-						#	collide with the backside of the face, on the bottom of the step.
-						if(Ray_Result.empty()):
-							#Now we are going to shoot a ray from the collision position up to see if there is anything in the way.
-							Ray_From = Step_CollPos
-							Ray_To = Vector3(Step_CollPos.x, Player_Position.y, Step_CollPos.z)
-							Ray_Result = Ray_SpaceState.intersect_ray(Ray_From,Ray_To,[self])
+						#If the slide collision if higher than the player's feet...
+						if(Player_GlobalFeetPos_Y < Step_CollPos.y):
+							#Get the direction that the player is actually moving, not the way he is facing.
+							#	This currently only works when the floor vector is (0, -1, 0). Maybe in the future I will make
+							#	this project to where the player can walk on walls. Probably not.
+							Step_PlayerVel_Global_Norm = Vector3( Slope_PlayerVelVec2D.x , 0.0, Slope_PlayerVelVec2D.y )
 							
-							#If there is nothing in the way above the collision point...
-							if(Ray_Result.empty()):
+							#Get the slide collision and make it relative to the player, in this variable.
+							Step_CollPos_Global_RelToPlayer = Vector3(Step_CollPos.x, Player_Position.y, Step_CollPos.z) - Player_Position
+							#Then normalize it so we can get an angle.
+							Step_CollPos_Global_RelToPlayer = Step_CollPos_Global_RelToPlayer.normalized()
+							
+							#Now find the angle between the player's normalized movement velocity and the direction the collision is relative to the player.
+							Step_CollPos_AngleToPlayer = abs(  asin(Step_CollPos_Global_RelToPlayer.dot(Step_PlayerVel_Global_Norm))  )
+							
+							#If the player isn't running parallel to the step (within a certain angle, which is 11.5 degress/0.200712864 rads)...
+							if(Step_CollPos_AngleToPlayer > 0.200712864):
+								#Add a little bit to where we will be checking the step normal, to make sure it
+								#	is actually over the step. This is according to what direction the player is moving.
+								Step_CollPos.x = to_global(Step_CollPos_RelToPlayer * Step_RaycastDistMultiplier).x
+								Step_CollPos.y = Player_GlobalFeetPos_Y + Step_MaxHeight
+								Step_CollPos.z = to_global(Step_CollPos_RelToPlayer * Step_RaycastDistMultiplier).z
+								
+								#Emit the signal to render the collision position, for debugging.
+								emit_signal("RenderColl", Step_CollPos)
+								
 								#Setup and execute a raycast at the collision position specified.
-								Ray_From = Step_CollPos
-								Ray_To = Vector3(Step_CollPos.x, Player_GlobalFeetPos_Y, Step_CollPos.z)
+								Ray_SpaceState = get_world().get_direct_space_state()
+								Ray_From = Vector3(Player_Position.x , Step_CollPos.y , Player_Position.z)
+								Ray_To = Step_CollPos
 								Ray_Result = Ray_SpaceState.intersect_ray(Ray_From,Ray_To,[self])
-							
-								#If there is a result from the raycast that is not empty...
-								if(not Ray_Result.empty()):
-									#If the collision is a normal that can be considered a floor/step...
-									if(Ray_Result.normal.y >= MaxFloorAngleNor_Y):
-										#If the stepping distance has not been set, and the camera is not being interpolated from a previous step...
-										if(SteppingUp_SteppingDistance == 0 and CamInterpo_DoInterpolation == false):
-											#Set the distance to move up in a variable.
-											SteppingUp_SteppingDistance = (Ray_Result.position.y - Player_GlobalFeetPos_Y + Step_SafetyMargin)
-											
-											#Get the local Y position of the camera before it was moved up the step.
-											CamInterpo_StartingPos_Local_Y = Node_Camera3D.translation.y - SteppingUp_SteppingDistance
-											
-											#Move the player up a little past the step.
-											global_translate(Vector3(0.0, SteppingUp_SteppingDistance, 0.0))
-											
-											#Then get the target Y position; the position that we want to move the camera to, ultimately, which is just what it is now.
-											CamInterpo_TargetPos_Local_Y = Node_Camera3D.translation.y
-											
-											#Then set the local position (relative to the player scene node) of the camera node back down to where it was before moving.
-											Node_Camera3D.translation.y = CamInterpo_StartingPos_Local_Y
-											
-											#Say to do interpolation.
-											CamInterpo_DoInterpolation = true
-											#Reset camera interpolation timer.
-											CamInterpo_CurrentTime_Secs = 0
-										#Otherwise, if the stepping distance has not been set and the camera IS being interpolated from a previous step...
-										elif(SteppingUp_SteppingDistance == 0 and CamInterpo_DoInterpolation == true):
-											#Set the distance to move up in a variable.
-											SteppingUp_SteppingDistance = (Ray_Result.position.y - Player_GlobalFeetPos_Y + Step_SafetyMargin)
-		
-											#Get the local Y position of the camera before it was moved up the step.
-											var temp = to_global(Node_Camera3D.translation)
-		
-											#Move the player up a little past the step.
-											global_translate(Vector3(0.0, SteppingUp_SteppingDistance, 0.0))
-		
-											#Get the starting position in global space and convert it to local space.
-											CamInterpo_StartingPos_Local_Y = to_local(temp).y
-											#Then get the target local Y position; the position that we want to move the camera to, ultimately, which is just what it is now.
-											CamInterpo_TargetPos_Local_Y = CamInterpo_DefaultPosition_Local_Y
-											
-											#Then set the local position (relative to the player scene node) of the camera node back down to where it was before moving.
-											Node_Camera3D.translation.y = CamInterpo_StartingPos_Local_Y
-											
-											#Reset camera interpolation timer.
-											CamInterpo_CurrentTime_Secs = 0
+								
+								#If there is nothing in the way of the character...
+								#	This is here because, say there is a step that is partly above the ground. It's not touching. If the character walks into it,
+								#	and it's within the step size threshold, this code will not allow the ray to be shot from within the step, causing it(the ray cast) to
+								#	collide with the backside of the face, on the bottom of the step.
+								if(Ray_Result.empty()):
+									#Now we are going to shoot a ray from the collision position up to see if there is anything in the way.
+									Ray_From = Step_CollPos
+									Ray_To = Vector3(Step_CollPos.x, Player_Position.y, Step_CollPos.z)
+									Ray_Result = Ray_SpaceState.intersect_ray(Ray_From,Ray_To,[self])
+									
+									#If there is nothing in the way above the collision point...
+									if(Ray_Result.empty()):
+										#Setup and execute a raycast at the collision position specified.
+										Ray_From = Step_CollPos
+										Ray_To = Vector3(Step_CollPos.x, Player_GlobalFeetPos_Y, Step_CollPos.z)
+										Ray_Result = Ray_SpaceState.intersect_ray(Ray_From,Ray_To,[self])
+									
+										#If there is a result from the raycast that is not empty...
+										if(not Ray_Result.empty()):
+											#If the collision is a normal that can be considered a floor/step...
+											if(Ray_Result.normal.y >= MaxFloorAngleNor_Y):
+												#If the stepping distance has not been set, and the camera is not being interpolated from a previous step...
+												if(SteppingUp_SteppingDistance == 0 and CamInterpo_DoInterpolation == false):
+													#Set the distance to move up in a variable.
+													SteppingUp_SteppingDistance = (Ray_Result.position.y - Player_GlobalFeetPos_Y + Step_SafetyMargin)
+													
+													#Get the local Y position of the camera before it was moved up the step.
+													CamInterpo_StartingPos_Local_Y = Node_Camera3D.translation.y - SteppingUp_SteppingDistance
+													
+													#Move the player up a little past the step.
+													global_translate(Vector3(0.0, SteppingUp_SteppingDistance, 0.0))
+													
+													#Then get the target Y position; the position that we want to move the camera to, ultimately, which is just what it is now.
+													CamInterpo_TargetPos_Local_Y = Node_Camera3D.translation.y
+													
+													#Then set the local position (relative to the player scene node) of the camera node back down to where it was before moving.
+													Node_Camera3D.translation.y = CamInterpo_StartingPos_Local_Y
+													
+													#Say to do interpolation.
+													CamInterpo_DoInterpolation = true
+													#Reset camera interpolation timer.
+													CamInterpo_CurrentTime_Secs = 0
+												#Otherwise, if the stepping distance has not been set and the camera IS being interpolated from a previous step...
+												elif(SteppingUp_SteppingDistance == 0 and CamInterpo_DoInterpolation == true):
+													#Set the distance to move up in a variable.
+													SteppingUp_SteppingDistance = (Ray_Result.position.y - Player_GlobalFeetPos_Y + Step_SafetyMargin)
+				
+													#Get the local Y position of the camera before it was moved up the step.
+													Step_PosBefore = to_global(Node_Camera3D.translation)
+				
+													#Move the player up a little past the step.
+													global_translate(Vector3(0.0, SteppingUp_SteppingDistance, 0.0))
+				
+													#Get the starting position in global space and convert it to local space.
+													CamInterpo_StartingPos_Local_Y = to_local(Step_PosBefore).y
+													#Then get the target local Y position; the position that we want to move the camera to, ultimately, which is just what it is now.
+													CamInterpo_TargetPos_Local_Y = CamInterpo_DefaultPosition_Local_Y
+													
+													#Then set the local position (relative to the player scene node) of the camera node back down to where it was before moving.
+													Node_Camera3D.translation.y = CamInterpo_StartingPos_Local_Y
+													
+													#Reset camera interpolation timer.
+													CamInterpo_CurrentTime_Secs = 0
 				
 				#Reset the stepping distance to 0.
 				SteppingUp_SteppingDistance = 0
@@ -1113,9 +1112,36 @@ func _physics_process(delta):
 		#Do the camera interpolation and return the modified interpolation time.
 		CamInterpo_CurrentTime_Secs = InterpolateCamera(CamInterpo_StartingPos_Local_Y, CamInterpo_TargetPos_Local_Y, CamInterpo_CurrentTime_Secs, delta)
 
+#	#####################################
+#	#		  TOUCH FUNCTION			#
+#	#####################################
+#	#if(FinalMoveVel.x != 0 and FinalMoveVel.z != 0):
+#	for Slide in range(get_slide_count()):
+#		if(get_slide_collision(Slide).collider.has_method("Touched_Function")):
+#			#If the list doesn't have the current collider...
+#			if(not Touch_ObjectsTouched.has(get_slide_collision(Slide).collider)):
+#				Touch_ObjectsTouched[Slide] = get_slide_collision(Slide).collider
+#				Touch_ObjectsTouched[Slide].Touched_Function()
+#
+#	Debug_Label_String = "BEFORE: " + str(Touch_ObjectsTouched)
+#
+#	var found = true
+#
+#	#Now I want to see if any of the objects in the list are currently being touched.
+#	for x in range(Touch_ObjectsTouched.size()):
+#		for Slide in range(get_slide_count()):
+#			if(get_slide_collision(Slide).collider == Touch_ObjectsTouched[x]):
+#				found = true
+#			else:
+#				found = false
+#
+#			if(found == false):
+#				Touch_ObjectsTouched[x] = null
+#
+#	Debug_Label_String += "\nAFTER: " + str(Touch_ObjectsTouched)
+	
 	#############################
 	#			DEBUG			#
 	#############################
-	#This is all just debug stuff.
-	Debug_Label_String = "FPS: " + str(Engine.get_frames_per_second())
+	#Set the debug text.
 	Debug_Label.set_text(Debug_Label_String)
