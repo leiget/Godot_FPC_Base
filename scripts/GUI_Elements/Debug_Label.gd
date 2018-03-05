@@ -10,7 +10,7 @@ func _ready():
 
 func ViewportSizeChanged():
 	#Set the font's relative size.
-	var Font_Size_Rel = 80.0/1080.0
+	var Font_Size_Rel = 50.0/1080.0
 	
 	#Set the font rectangle and it's BG rectangle's relative size to the screen.
 	var Font_RectSize_Rel = Vector2( Font_Size_Rel*6 , Font_Size_Rel*3 )

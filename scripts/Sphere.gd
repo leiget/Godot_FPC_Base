@@ -7,7 +7,7 @@ func UseFunction():
 	var Pos = Vector3(0,0,0)
 	var Impulse = Vector3(0,0,0)
 	#Setup the impulse multiplication factor according to the mass of the object.
-	var Impulse_Mul = 5 / self.mass
+	var Impulse_Mul = 3.5 / self.mass
 	
 	#Get the player node.
 	var Player = get_tree().get_root().get_child(0).get_node("Player")

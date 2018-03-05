@@ -16,8 +16,9 @@ config/icon="res://icon.png"
 
 [display]
 
-window/size/width=1280
-window/size/height=720
+window/size/width=1920
+window/size/height=1080
+window/size/fullscreen=true
 window/vsync/use_vsync=false
 window/stretch/mode="viewport"
 window/stretch/aspect="keep_height"
@@ -46,6 +47,7 @@ Player_ToggleDebug=[ Object(InputEventKey,"resource_local_to_scene":false,"resou
 
 [rendering]
 
+threads/thread_model=2
 quality/directional_shadow/size=8192
 quality/shadow_atlas/size=8192
-environment/default_environment="res://default_env.tres"
+environment/default_environment="res://environment/Main_Env.tres"

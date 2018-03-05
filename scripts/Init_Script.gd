@@ -3,12 +3,14 @@ extends Spatial
 #Switch to allow or disallow the instancing of the collision spheres.
 var Coll_Sphere_Switch = false
 
-#This is the sphere scene that will visualize the player's collision slides for us.
+#This will be the sphere scene that will visualize the player's collision slides for us.
 #	We will instance this scene so we can have multiple spheres. In other words we
 #	only need one scene, we will simply copy it around.
-onready var Coll_Sphere_Scene = preload("res://scenes/Coll_Sphere.tscn")
+onready var Coll_Sphere_Scene = null
 
-#
+################################################################
+#							READY							   #
+################################################################
 func _ready():
 	#Set the window title.
 	OS.set_window_title("Godot 3.x FPC Base")
@@ -44,6 +46,8 @@ func _ready():
 
 		#Loop through the array and make each element a new sphere instance.
 		for x in range(Player_MaxSlides):
+			#Load the sphere from the scene.
+			Coll_Sphere_Scene = load("res://scenes/DEBUG/Coll_Sphere.tscn")
 			#Instance the sphere node from the reference scene.
 			Coll_Sphere_Array[x] = Coll_Sphere_Scene.instance()
 
@@ -73,7 +77,9 @@ func _ready():
 			#Then set the sphere's position.
 			Coll_Sphere_Array[x].global_transform.origin = Vector3(0.0, Temp_y, 0.0)
 
-#
+################################################################
+#					UNHANDLED INPUT							   #
+################################################################
 func _unhandled_input(event):
 	#If the even is a keyboard key...
 	if(event is InputEventKey):
