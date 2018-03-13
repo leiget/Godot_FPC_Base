@@ -8,12 +8,7 @@
 [ext_resource path="res://fonts/Almanack/rm_almanack.ttf" type="DynamicFontData" id=6]
 [ext_resource path="res://scripts/GUI_Elements/Debug_Label.gd" type="Script" id=7]
 
-[sub_resource type="CapsuleShape" id=1]
-
-radius = 0.2
-height = 1.4
-
-[sub_resource type="ArrayMesh" id=2]
+[sub_resource type="ArrayMesh" id=1]
 
 resource_name = "Plane"
 blend_shape_mode = 1
@@ -31,7 +26,7 @@ surfaces/0 = {
 }
 _sections_unfolded = [ "Resource" ]
 
-[sub_resource type="SpatialMaterial" id=3]
+[sub_resource type="SpatialMaterial" id=2]
 
 render_priority = 0
 flags_transparent = false
@@ -83,6 +78,11 @@ proximity_fade_enable = false
 distance_fade_enable = false
 _sections_unfolded = [ "Albedo", "Roughness" ]
 
+[sub_resource type="CapsuleShape" id=3]
+
+radius = 0.2
+height = 1.4
+
 [sub_resource type="DynamicFont" id=4]
 
 size = 32
@@ -107,16 +107,7 @@ collision/safe_margin = 0.01
 script = ExtResource( 1 )
 _sections_unfolded = [ "Transform", "Visibility", "collision" ]
 
-[node name="Init_Script" type="Spatial" parent="." index="0"]
-
-[node name="CollisionShape" type="CollisionShape" parent="." index="1"]
-
-transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, 0, 0, 0 )
-shape = SubResource( 1 )
-disabled = false
-_sections_unfolded = [ "Transform" ]
-
-[node name="FPC_Base_Mesh2" type="MeshInstance" parent="." index="2"]
+[node name="FPC_Base_Mesh" type="MeshInstance" parent="." index="0"]
 
 layers = 524288
 material_override = null
@@ -127,12 +118,19 @@ lod_min_distance = 0.0
 lod_min_hysteresis = 0.0
 lod_max_distance = 0.0
 lod_max_hysteresis = 0.0
-mesh = SubResource( 2 )
+mesh = SubResource( 1 )
 skeleton = NodePath("..")
-material/0 = SubResource( 3 )
+material/0 = SubResource( 2 )
 _sections_unfolded = [ "material" ]
 
-[node name="Camera_Main" type="Camera" parent="." index="3"]
+[node name="CollisionShape" type="CollisionShape" parent="." index="1"]
+
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, 0, 0, 0 )
+shape = SubResource( 3 )
+disabled = false
+_sections_unfolded = [ "Transform" ]
+
+[node name="Camera_Main" type="Camera" parent="." index="2"]
 
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0 )
 keep_aspect = 1
@@ -149,7 +147,7 @@ near = 0.05
 far = 256.0
 _sections_unfolded = [ "Transform", "Visibility" ]
 
-[node name="Camera2D" type="Camera2D" parent="." index="4"]
+[node name="Camera2D" type="Camera2D" parent="." index="3"]
 
 z_index = 128
 anchor_mode = 0

@@ -16,9 +16,8 @@ config/icon="res://icon.png"
 
 [display]
 
-window/size/width=1920
-window/size/height=1080
-window/size/fullscreen=true
+window/size/width=1280
+window/size/height=720
 window/vsync/use_vsync=false
 window/stretch/mode="viewport"
 window/stretch/aspect="keep_height"
@@ -45,9 +44,12 @@ Toggle_Fullscreen=[ Object(InputEventKey,"resource_local_to_scene":false,"resour
 Player_ToggleDebug=[ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777246,"unicode":0,"echo":false,"script":null)
  ]
 
+[physics]
+
+3d/physics_engine="Bullet"
+
 [rendering]
 
-threads/thread_model=2
 quality/directional_shadow/size=8192
 quality/shadow_atlas/size=8192
 environment/default_environment="res://environment/Main_Env.tres"

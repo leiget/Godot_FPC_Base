@@ -1,3 +1,4 @@
+# Extend the current nodes functionality.
 extends TextureRect
 
 func _ready():

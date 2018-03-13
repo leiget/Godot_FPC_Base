@@ -1,11 +1,10 @@
-[gd_scene load_steps=47 format=2]
+[gd_scene load_steps=46 format=2]
 
 [ext_resource path="res://dae/Base.dae" type="PackedScene" id=1]
-[ext_resource path="res://textures/Imperfections/FingerPrints_256px.png" type="Texture" id=2]
-[ext_resource path="res://textures/dark_metal_01/dark_metal_01_C.png" type="Texture" id=3]
-[ext_resource path="res://textures/dark_metal_01/dark_metal_01_N.png" type="Texture" id=4]
-[ext_resource path="res://textures/dark_metal_01/dark_metal_01_R.png" type="Texture" id=5]
-[ext_resource path="res://coll_shapes/invisible_walls.shape" type="Shape" id=6]
+[ext_resource path="res://textures/dark_metal_01/dark_metal_01_C.png" type="Texture" id=2]
+[ext_resource path="res://textures/dark_metal_01/dark_metal_01_N.png" type="Texture" id=3]
+[ext_resource path="res://textures/dark_metal_01/dark_metal_01_R.png" type="Texture" id=4]
+[ext_resource path="res://coll_shapes/invisible_walls.shape" type="Shape" id=5]
 
 [sub_resource type="ConcavePolygonShape" id=1]
 
@@ -39,7 +38,6 @@ metallic = 0.0
 metallic_specular = 0.5
 metallic_texture_channel = 0
 roughness = 1.0
-roughness_texture = ExtResource( 2 )
 roughness_texture_channel = 0
 emission_enabled = false
 normal_enabled = false
@@ -108,17 +106,17 @@ params_billboard_mode = 0
 params_grow = false
 params_use_alpha_scissor = false
 albedo_color = Color( 1, 1, 1, 1 )
-albedo_texture = ExtResource( 3 )
+albedo_texture = ExtResource( 2 )
 metallic = 1.0
 metallic_specular = 0.5
 metallic_texture_channel = 0
 roughness = 1.0
-roughness_texture = ExtResource( 5 )
+roughness_texture = ExtResource( 4 )
 roughness_texture_channel = 0
 emission_enabled = false
 normal_enabled = true
 normal_scale = 1.0
-normal_texture = ExtResource( 4 )
+normal_texture = ExtResource( 3 )
 rim_enabled = false
 clearcoat_enabled = false
 anisotropy_enabled = false
@@ -305,6 +303,7 @@ disabled = false
 
 [node name="BigHemisphere" parent="." index="7"]
 
+editor/display_folded = true
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -20.2395, 0, 20.2395 )
 material/0 = SubResource( 2 )
 _sections_unfolded = [ "Geometry", "Transform", "material" ]
@@ -1044,7 +1043,6 @@ disabled = false
 
 [node name="InvisibleWalls" type="StaticBody" parent="." index="43"]
 
-editor/display_folded = true
 input_ray_pickable = true
 input_capture_on_drag = false
 collision_layer = 1
@@ -1056,7 +1054,9 @@ constant_angular_velocity = Vector3( 0, 0, 0 )
 
 [node name="CollisionShape" type="CollisionShape" parent="InvisibleWalls" index="0"]
 
-shape = ExtResource( 6 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18.0882, 0 )
+shape = ExtResource( 5 )
 disabled = false
+_sections_unfolded = [ "Visibility" ]
 
 

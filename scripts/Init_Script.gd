@@ -1,3 +1,4 @@
+# Extend the current nodes functionality.
 extends Spatial
 
 #Switch to allow or disallow the instancing of the collision spheres.
@@ -106,6 +107,7 @@ func _unhandled_input(event):
 ################################################################
 #This is code you put in the kinematic character for when you want to visualize the slide collisions.
 #	It makes a difference putting it before or after "move_and_slide()" as it changes the slides and their properties.
+#
 #if(get_slide_count()>0):
 #		for slide in range(get_slide_count()):
 #			emit_signal("Coll_Sphere_Show", slide, get_slide_collision(slide).position)

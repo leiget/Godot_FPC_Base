@@ -1,3 +1,4 @@
+# Extend the current nodes functionality.
 extends RigidBody
 
 #The function that gets executed whenever the player presses "Use" on the object this is attached to.

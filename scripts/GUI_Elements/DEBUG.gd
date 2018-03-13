@@ -1,3 +1,4 @@
+# Extend the current nodes functionality.
 extends Control
 
 func _ready():

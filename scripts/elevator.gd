@@ -1,7 +1,9 @@
+# Extend the current nodes functionality.
 extends KinematicBody
 
+#The function that exectues whenever the player touches it.
 func Touched_Function():
-	print("***")
-	print(get_tree().get_root().get_child(0).get_node("Player").get_slide_count())
+	#If the elevator animation isn't playing...
 	if(not $AnimationPlayer.is_playing()):
+		#Play it.
 		$AnimationPlayer.play("Lift")
