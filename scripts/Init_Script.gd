@@ -4,11 +4,6 @@ extends Spatial
 #Switch to allow or disallow the instancing of the collision spheres.
 var Coll_Sphere_Switch = false
 
-#This will be the sphere scene that will visualize the player's collision slides for us.
-#	We will instance this scene so we can have multiple spheres. In other words we
-#	only need one scene, we will simply copy it around.
-onready var Coll_Sphere_Scene = null
-
 ################################################################
 #							READY							   #
 ################################################################
@@ -44,11 +39,15 @@ func _ready():
 		var Player_MaxSlides = Node_Player.get("MaxSlides")
 		#Then let's make the array size the number of max slides that the player has.
 		Coll_Sphere_Array.resize(Player_MaxSlides)
+		
+		#Load the sphere from the scene.
+		#This will be the sphere scene that will visualize the player's collision slides for us.
+		#	We will instance this scene so we can have multiple spheres. In other words we
+		#	only need one scene, we will simply copy it around.
+		var Coll_Sphere_Scene = load("res://scenes/DEBUG/Coll_Sphere.tscn")
 
 		#Loop through the array and make each element a new sphere instance.
 		for x in range(Player_MaxSlides):
-			#Load the sphere from the scene.
-			Coll_Sphere_Scene = load("res://scenes/DEBUG/Coll_Sphere.tscn")
 			#Instance the sphere node from the reference scene.
 			Coll_Sphere_Array[x] = Coll_Sphere_Scene.instance()
 

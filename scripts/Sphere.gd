@@ -28,7 +28,7 @@ func UseFunction():
 	#	So the position of the impulse is in global space (not affected by the rotaton of the object),
 	#		but is relative to the object.
 	Pos = Player.Use_Ray_IntersectPos - self.get_translation()
-	#The direction and magnitude to apply the impulse in.
+	#The direction and magnitude in which to apply the impulse.
 	Impulse = Cam_Pointing_Dir * Impulse_Mul
 	
 	#Apply the impulse according to all the above.

@@ -2,7 +2,6 @@
 
 [ext_resource path="res://scripts/DEBUG_Elements/Coll_Sphere.gd" type="Script" id=1]
 
-
 [sub_resource type="Shader" id=1]
 
 code = "shader_type spatial;
@@ -18,7 +17,7 @@ void fragment()
 render_priority = 0
 shader = SubResource( 1 )
 
-[node name="Coll_Sphere" type="ImmediateGeometry"]
+[node name="Coll_Sphere" type="ImmediateGeometry" index="0"]
 
 layers = 1
 material_override = SubResource( 2 )

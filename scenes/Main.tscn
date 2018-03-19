@@ -365,6 +365,8 @@ _sections_unfolded = [ "Pause", "Transform", "Visibility" ]
 
 [node name="Env_and_Lights" type="Spatial" parent="." index="0"]
 
+editor/display_folded = true
+
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Env_and_Lights" index="0"]
 
 environment = ExtResource( 2 )
@@ -398,6 +400,8 @@ directional_shadow_max_distance = 100.0
 _sections_unfolded = [ "Directional Shadow", "Editor", "Light", "Shadow" ]
 
 [node name="Base" parent="." index="1" instance=ExtResource( 3 )]
+
+editor/display_folded = true
 
 [node name="Platform_Low" type="KinematicBody" parent="Base" index="43"]
 
@@ -560,7 +564,7 @@ input_capture_on_drag = false
 collision_layer = 1
 collision_mask = 1
 mode = 0
-mass = 0.4
+mass = 0.45
 friction = 0.7
 bounce = 0.12
 gravity_scale = 1.0
@@ -780,7 +784,7 @@ disabled = false
 [node name="SmallStep_03" type="StaticBody" parent="Base" index="52"]
 
 editor/display_folded = true
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 20.4079, 0.2, -18.8816 )
+transform = Transform( 1, 0, 0, 0, 0.997066, 0.076548, 0, -0.076548, 0.997066, 20.4079, 0.2, -18.8816 )
 input_ray_pickable = true
 input_capture_on_drag = false
 collision_layer = 1
@@ -899,6 +903,6 @@ data = SubResource( 28 )
 
 [node name="Player" parent="." index="3" instance=ExtResource( 8 )]
 
-transform = Transform( -0.594539, 0, -0.804066, 0, 1, 0, 0.804066, 0, -0.594539, -4.4796, 0.909163, -20.934 )
+transform = Transform( -0.993144, 0, -0.116886, 0, 1, 0, 0.116886, 0, -0.993144, -4.95184, 0.909163, -18.632 )
 
 

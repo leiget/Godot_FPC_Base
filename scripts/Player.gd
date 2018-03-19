@@ -7,8 +7,8 @@
 #####################################################################################################
 #											NOTES													#
 #####################################################################################################
-# - The collision safety margin must be set to at least 0.01 for the player's kinematic body, or else things like walking up steps and such will not work correctly.
-#	-You'll need to test it and find out what works whenever you change the size of the player's collision shape.
+# - The collision safety margin must be set to around 0.01 for the player's kinematic body, or else things like walking up steps and such will not work correctly.
+#	- You'll need to test it and find out what works whenever you change the size of the player's collision shape.
 # - This script is made with the intent that the player's collision shape is a capsule.
 # - Note that in Godot 3.0.2 the “move_and_slide()” function has 5 arguments, but in the latest GitHub version (as of March 07, 2018) it has 6, with
 #	the added argument being in the 3rd position and is “bool infinite_inertia=true”. If this option is true, what it means is that no other object
@@ -77,21 +77,19 @@ var Jump_Length = 0.75
 #	If this height is more than half the height of the character, it will be set to half the height of the character.
 #	This happens in the "_ready()" function.
 var Step_MaxHeight = 0.5
-# The additional amount that character has to move up when stepping up a step.
-#	This helps keep the character from getting stuck moving up and down because he can't get quite enough
-#	height to get over the step.
-# It's set according to how fast the player is moving, so that the stepping of stairs is more correct.
-# You may not need to edit this, but incase you do it's here.
-# DEFAULT: 0.2/BaseWalkVelocity
-var Step_SafetyMargin = 0.2/BaseWalkVelocity
+# The dividend for the step safety margin variable, below. This is also used in "_physics_process()" to alter the step safety margin
+#	based on the speed of the character.
+# Raise this number to make the player move higher up when stepping on a step.
+var Step_SafetyMargin_Dividend = 0.2
 # The amount to move the ray cast away from the player to help detect steps more accurately.
 var Step_RaycastDistMultiplier = 1.1
 
 #	CAMERA INTERPOLATION   #
-# How long it takes to interpolate the camera, in seconds.
-#	Depends on how fast the player is moving.
-#	The default length is 0.08 seconds, if BaseWalkVelocity is 10.
-var CamInterpo_Length_Secs = BaseWalkVelocity / (125.0 * (BaseWalkVelocity/10.0))
+# The multiplicand for the "CamInterpo_Length_Secs" variable below.
+#	This is also used in the same way in "_physics_process()" so that when the player presses the "Shift" modifier action
+#	the camera interpolation length will be altered to fit the speed of the character.
+# Lower this number to make the camera interpolation speed slower.
+var CamInterpo_Length_Secs_Multiplicand = 125.0
 
 #	SLOPE	SPEED	#
 # Amount to let slopes affect gravity of the player character, and therefore speed movement speed when walking up them.
@@ -212,6 +210,8 @@ var FinalMoveVel = Vector3(0,0,0)
 #########################
 #		ROTATION		#
 #########################
+# The bool that says to rotate the character because the mouse has been moved.
+var Mouse_Moved = false
 # The screen movement of the mouse on the X and Y axis.
 #	This is using "relative mouse movement". That is, the mouse position relative to what it in the previous frame.
 #	If the coursor was at (10,15) during the last frame, and now it's at (15,25), it has moved (5,10) pixels
@@ -276,6 +276,11 @@ var Slope_DotProduct = 0.0
 #########################
 #			STEPS		#
 #########################
+# The additional amount that character has to move up when stepping up a step.
+#	This helps keep the character from getting stuck moving up and down because he can't get quite enough
+#	height to get over the step.
+# It's set according to how fast the player is moving, so that the stepping of stairs is more correct.
+var Step_SafetyMargin = Step_SafetyMargin_Dividend/BaseWalkVelocity
 # Variable to say how high to move charater up, when stepping on step.
 var SteppingUp_SteppingDistance = 0.0
 # The step collision position.
@@ -301,6 +306,10 @@ var Step_CollPos_AngleToPlayer = 0.0
 #############################
 #	CAMERA STEP SMOOTHING	#
 #############################
+# How long it takes to interpolate the camera, in seconds.
+#	Depends on how fast the player is moving.
+#	The default length is 0.08 seconds, if BaseWalkVelocity is 10.
+var CamInterpo_Length_Secs = BaseWalkVelocity / (CamInterpo_Length_Secs_Multiplicand * (BaseWalkVelocity/10.0))
 # The bool to activate the interpolation of the camera on a step.
 var CamInterpo_DoInterpolation = false
 # The default value that the camera will interpolate to, in local space to the character.
@@ -374,19 +383,20 @@ func Step_Player_Up():
 			# And if the player is on a wall...
 			if(State_OnWalls):
 				# Go through each of the collisions.
-				for Slide in range(0, SlideCount):
+				for Slide in range(SlideCount):
 					# If the slide collision is a wall...
 					if(get_slide_collision(Slide).normal.y <= MaxFloorAngleNor_Y):
 						# Get the position of the collision.
 						Step_CollPos = get_slide_collision(Slide).position
-						# Get the position of the collision relative to the player.
-						Step_CollPos_RelToPlayer = to_local(Step_CollPos)
 						# Get the global Y position of the player's feet.
 						#	Don't forget the safe margin of the character's physics body!
 						Player_GlobalFeetPos_Y = Player_Position.y - (Player_Height / 2) - get("collision/safe_margin")
 						
 						# If the slide collision if higher than the player's feet...
 						if(Player_GlobalFeetPos_Y < Step_CollPos.y):
+							# Get the position of the collision relative to the player.
+							Step_CollPos_RelToPlayer = to_local(Step_CollPos)
+							
 							# Get the direction that the player is actually moving, not the way he is facing.
 							#	This currently only works when the floor vector is (0, -1, 0). Maybe in the future I will make
 							#	this project to where the player can walk on walls. Probably not.
@@ -433,35 +443,33 @@ func Step_Player_Up():
 									
 										# If there is a result from the raycast that is not empty...
 										if(not Ray_Result.empty()):
-											# If the collision is a normal that can be considered a floor/step...
-											if(Ray_Result.normal.y >= MaxFloorAngleNor_Y):
-												# If the stepping distance has not been set, and the camera is not being interpolated from a previous step...
-												if(SteppingUp_SteppingDistance == 0):
-													# Get the position of the camera before it was stepped up, in global space.
-													Step_Cam_PosBefore_Global = to_global(Node_Camera3D.translation)
-													
-													# Set the distance to move up in a variable.
-													SteppingUp_SteppingDistance = (Ray_Result.position.y - Player_GlobalFeetPos_Y + Step_SafetyMargin)
-													
-													# Set the starting local Y axis position of the camera interpolation, which is simply where the camera was before it was moved up with the player.
-													CamInterpo_StartingPos_Local_Y = to_local(Step_Cam_PosBefore_Global).y - SteppingUp_SteppingDistance
-													
-													# If the starting position is starting to fall below half of the player's height...
-													if(CamInterpo_StartingPos_Local_Y < 0.0):
-														# Set it to half the player's height (which is 0.0 in the "player.tscn" scene).
-														CamInterpo_StartingPos_Local_Y = 0.0
-													
-													# Move the player up a little past the step.
-													global_translate(Vector3(0.0, SteppingUp_SteppingDistance, 0.0))
-													
-													# Then set the local position of the camera node back down to where it was before moving.
-													Node_Camera3D.translation.y = CamInterpo_StartingPos_Local_Y
-													
-													# Say to do interpolation.
-													CamInterpo_DoInterpolation = true
-													
-													# Reset camera interpolation timer.
-													CamInterpo_CurrentTime_Secs = 0
+											# If the stepping distance has not been set, and the camera is not being interpolated from a previous step...
+											if(SteppingUp_SteppingDistance == 0):
+												# Get the position of the camera before it was stepped up, in global space.
+												Step_Cam_PosBefore_Global = to_global(Node_Camera3D.translation)
+												
+												# Set the distance to move up in a variable.
+												SteppingUp_SteppingDistance = (Ray_Result.position.y - Player_GlobalFeetPos_Y + Step_SafetyMargin)
+												
+												# Set the starting local Y axis position of the camera interpolation, which is simply where the camera was before it was moved up with the player.
+												CamInterpo_StartingPos_Local_Y = to_local(Step_Cam_PosBefore_Global).y - SteppingUp_SteppingDistance
+												
+												# If the starting position is starting to fall below half of the player's height...
+												if(CamInterpo_StartingPos_Local_Y < 0.0):
+													# Set it to half the player's height (which is 0.0 in the "player.tscn" scene).
+													CamInterpo_StartingPos_Local_Y = 0.0
+												
+												# Move the player up a little past the step.
+												global_translate(Vector3(0.0, SteppingUp_SteppingDistance, 0.0))
+												
+												# Then set the local position of the camera node back down to where it was before moving.
+												Node_Camera3D.translation.y = CamInterpo_StartingPos_Local_Y
+												
+												# Say to do interpolation.
+												CamInterpo_DoInterpolation = true
+												
+												# Reset camera interpolation timer.
+												CamInterpo_CurrentTime_Secs = 0
 													
 				# Reset the stepping distance to 0.
 				SteppingUp_SteppingDistance = 0
@@ -725,18 +733,16 @@ func _input(event):
 			#####################
 			#	 CALCULATION	#
 			#####################
-			# Here everything is calculated before it is actually applied.
-
 			#	LEFT and RIGHT	#
 			# Set how much the mouse has moved from its last position.
 			Mouse_Rel_Movement = event.relative
-
+			
 			# Find out what the current local X rotation is of the camera itself.
 			Cam_Local_Rot_X = rad2deg(Node_Camera3D.get_rotation().x)
-
+			
 			# Add the mouse movement to the local camera X axis rotation.
 			Cam_Temp_XRot_Var = Cam_Local_Rot_X + -Mouse_Rel_Movement.y
-
+			
 			# If it's too low...
 			if(Cam_Temp_XRot_Var < -90):
 				# Set it back to the lower limit.
@@ -749,17 +755,9 @@ func _input(event):
 			else:
 				# Set the final X axis rotation.
 				Final_Cam_Rot_Local_X = Mouse_Rel_Movement.y
-
-			#############
-			#	APPLY	#
-			#############
-			# Here the mouse movement is finally applied.
-			# Apply the y axis rotation to the character kinematic body.
-			#	This means rotate the whole character left and right.
-			self.rotate_y(deg2rad(-Mouse_Rel_Movement.x) * Cam_RotateSens)
-			# Apply the x axis rotation to the camera.
-			#	And this is rotating _just_ the camera only, up and down on its local X axis.
-			Node_Camera3D.rotate_x(deg2rad(-Final_Cam_Rot_Local_X) * Cam_RotateSens)
+			
+			# Say that the mouse has moved so the player and his camera can be rotated.
+			Mouse_Moved = true
 
 
 
@@ -883,9 +881,9 @@ func _physics_process(delta):
 		FinalWalkVelocity = BaseWalkVelocity
 		
 	# Set the step saftey margin according to the player's current speed.
-	Step_SafetyMargin = 0.2/FinalWalkVelocity
+	Step_SafetyMargin = Step_SafetyMargin_Dividend/FinalWalkVelocity
 	# Then set the camera interpolation length according to the speed of the player.
-	CamInterpo_Length_Secs = FinalWalkVelocity / (125.0 * (FinalWalkVelocity/10.0))
+	CamInterpo_Length_Secs = FinalWalkVelocity / (CamInterpo_Length_Secs_Multiplicand * (FinalWalkVelocity/10.0))
 	
 	#############################################
 	#			CROSSHAIR: USABLE ITEM			#
@@ -1161,6 +1159,24 @@ func _physics_process(delta):
 	#####################################################################################################
 	#									FINAL MOVEMENT APPLICATION										#
 	#####################################################################################################
+	#####################
+	#	MOUSE ROTATION	#
+	#####################
+	if(Mouse_Moved):
+		# Here the mouse movement is finally applied.
+		# Apply the y axis rotation to the character kinematic body.
+		#	This means rotate the whole character left and right.
+		self.rotate_y(deg2rad(-Mouse_Rel_Movement.x) * Cam_RotateSens)
+		# Apply the x axis rotation to the camera.
+		#	And this is rotating _just_ the camera only, up and down on its local X axis.
+		Node_Camera3D.rotate_x(deg2rad(-Final_Cam_Rot_Local_X) * Cam_RotateSens)
+		
+		#Say that the mouse is basically done moving.
+		Mouse_Moved = false
+	
+	#####################
+	#	LINEAR MOVEMENT	#
+	#####################
 	# If character is on floor...
 	if(State_OnFloor):
 		# Add the floor velocity to the player character's final movement velocity.
@@ -1181,7 +1197,7 @@ func _physics_process(delta):
 	SlideCount = get_slide_count()
 	# Update the current player position reference variable.
 	Player_Position = translation
-		
+	
 	#########################################
 	#				STEPS					#
 	#########################################
