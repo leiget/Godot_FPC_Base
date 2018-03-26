@@ -903,6 +903,6 @@ data = SubResource( 28 )
 
 [node name="Player" parent="." index="3" instance=ExtResource( 8 )]
 
-transform = Transform( -0.993144, 0, -0.116886, 0, 1, 0, 0.116886, 0, -0.993144, -4.95184, 0.909163, -18.632 )
+transform = Transform( -0.553702, 0, -0.832715, 0, 1, 0, 0.832715, 0, -0.553702, 0, 0.953212, -6.3412 )
 
 
