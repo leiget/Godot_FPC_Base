@@ -110,7 +110,7 @@ var CamInterpo_Length_Secs_Multiplicand = 125.0
 #	SLOPE	SPEED	#
 # Amount to let slopes affect gravity of the player character, and therefore speed movement speed when walking up them.
 # DEFAULT: 0.2
-var Slope_EffectMultiplier_ClimbingUp = 0.2
+var Slope_EffectMultiplier_ClimbingUp = 0.3
 # Amount to let slopes affect gravity of the player character, and therefore speed movement speed when walking down them.
 # DEFAULT: 1.5
 var Slope_EffectMultiplier_ClimbingDown = 1.5
@@ -370,7 +370,7 @@ func InterpolateCamera(Prev_Pos_Local_Y, Time_Current, Time_Delta):
 		# Turn off the camera interpolation.
 		CamInterpo_DoInterpolation = false
 		# Return 0 for success.
-		return 0
+		return 0.0
 
 ########################
 # Step_Player_Up(void) #
@@ -592,7 +592,7 @@ func Slope_AffectSpeed():
 				#	being pulled down so much.
 				
 				# Setup the X and Z axis of the floor normal as a 2D vector for calculations.
-				Slope_FloorNor2D = Vector2(get_slide_collision(Slide).normal.x, get_slide_collision(Slide).normal.z)
+				Slope_FloorNor2D = Vector2(get_slide_collision(Slide).normal.x, get_slide_collision(Slide).normal.z).normalized()
 				
 				# Setup the temporary velocity vector and normalize the result.
 				Slope_PlayerVelVec2D = Vector2( (TempMoveVel_FWAndBW.x + TempMoveVel_LeftAndRight.x) , (TempMoveVel_FWAndBW.z + TempMoveVel_LeftAndRight.z) ).normalized()
@@ -608,10 +608,14 @@ func Slope_AffectSpeed():
 				else:
 					# Multiply the slope's dot product by the slope effect multipler, so that the game designer can say how much he wants the slope to affect the player's walking
 					#	velocity.
-					Slope_DotProduct *= Slope_EffectMultiplier_ClimbingUp
+					Slope_DotProduct *= -Slope_EffectMultiplier_ClimbingUp
 				
 				# Finally, set the falling speed multiplier.
-				Falling_Speed_Multiplier = lerp(Falling_Speed_Multiplier_Default, 1.0, pow( MaxFloorAngleNor_Y / get_slide_collision(Slide).normal.y , 4) * abs(Slope_DotProduct))
+				Falling_Speed_Multiplier = lerp(
+												Falling_Speed_Multiplier_Default ,
+												1.0 ,
+												pow( acos( get_slide_collision(Slide).normal.y ) / acos( MaxFloorAngleNor_Y ) * Slope_DotProduct, 2.0)
+												)
 
 
 
@@ -626,7 +630,7 @@ func _ready():
 	# Unhandled input is any input that is not handled by the GUI(control) or from _input().
 	#	For instance, pressing space in a textbox won't make your character jump.
 	#set_process_unhandled_input(true)
-	set_process_input(true)
+	set_process_unhandled_input(true)
 	
 	# Set the physics to be done. This is now the new _fixed_process() from Godot 2.1.
 	#	This is called according to the physics system's framerate. If it is set to 60 (in 
@@ -644,24 +648,15 @@ func _ready():
 	#First, we must do "move_and_slide()" so that we can get some of our states.
 	move_and_slide(Vector3(0.0, 0.0, 0.0), FloorNormal, SlopeStopMinVel, MaxSlides, MaxFloorAngleRad)
 	
-	#	Set Player On Floor	#
-	# This makes the character start falling if not placed on a floor.
-	# If the player is on the floor...
-	if(is_on_floor()):
-		# Say that he is not falling.
-		State_Falling=false
-		# And that he is one the floor in the variable.
-		State_OnFloor = true
-	# Otherwise, he's not on the floor. So...
-	else:
-		# Say that he is falling.
-		State_Falling=true
-		# And that he is not on the floor.
-		State_OnFloor = false
-	
-	# Set if the player is on a wall.
-	#	This is simply to initialize whether the character is on a wall.
+	# Collision States #
+	# Set if the player is on a wall, floor, or ceiling.
+	State_OnFloor = is_on_floor()
 	State_OnWalls = is_on_wall()
+	State_OnCeiling = is_on_ceiling()	
+	
+	# Falling State #
+	# Initialize the player as falling.
+	State_Falling = true
 	
 	# If the jump action is not pressed...
 	if(not Input.is_action_pressed(String_Jump)):
@@ -696,7 +691,7 @@ func _ready():
 # This is for any input not handled elsewhere, like if a control node (a GUI node, like a window or something)
 #	is currently using the mouse, this function will not run. When the GUI node is gone/minimized/no longer
 #	there, the input will be handled here.
-func _input(event):
+func _unhandled_input(event):
 	#############
 	#	MOUSE	#
 	#############
@@ -789,7 +784,7 @@ func _physics_process(delta):
 			# Say that the jump key has not been released.
 			Jump_Released = false
 	# Otherwise, if the jump key was released...
-	elif(not Input.is_action_pressed(String_Jump)):
+	else:
 		# Say that the player is not pressing the jump key.
 		Pressed_Jump = false
 		# And say that he has released it.
@@ -810,10 +805,11 @@ func _physics_process(delta):
 	# Set the step saftey margin according to the player's current speed.
 	Step_SafetyMargin = Step_SafetyMargin_Dividend / (BaseWalkVelocity / FinalWalkVelocity)
 	
-	# If the camera isn't currently being interpolated...
-	if(CamInterpo_CurrentTime_Secs > CamInterpo_Length_Secs):
-		# Set the camera interpolation length according to the speed of the player.
-		CamInterpo_Length_Secs = BaseWalkVelocity / (CamInterpo_Length_Secs_Multiplicand * (FinalWalkVelocity / 10.0) )
+	#############################################
+	#	CAMERA INTERPOLATION LENGTH MODIFIER	#
+	#############################################
+	# Set the camera interpolation length according to the speed of the player.
+	CamInterpo_Length_Secs = BaseWalkVelocity / (CamInterpo_Length_Secs_Multiplicand * (FinalWalkVelocity / 10.0) )
 	
 	#############################################
 	#			CROSSHAIR: USABLE ITEM			#
@@ -852,7 +848,7 @@ func _physics_process(delta):
 				# Use the function of the object intersected.
 				Ray_Result.collider.get_parent().UseFunction()
 		#NO USE FUNCTION#
-		# Otherwise, if there is not...
+		# Otherwise, if there is no use function...
 		else:
 			# Hide the red circle.
 			Node_Crosshair_Useable.visible=false
@@ -861,7 +857,7 @@ func _physics_process(delta):
 	# Else, if the ray hit nothing...
 	else:
 		# Hide the red circle.
-		Node_Crosshair_Useable.visible=false
+		Node_Crosshair_Useable.visible = false
 		# Then reset the ray intersections position.
 		Use_Ray_IntersectPos = Vector3(0,0,0)
 	

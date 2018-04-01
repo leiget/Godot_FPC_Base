@@ -78,13 +78,13 @@ proximity_fade_enable = false
 distance_fade_enable = false
 _sections_unfolded = [ "Albedo", "Roughness" ]
 
-[sub_resource type="CapsuleShape" id=4]
+[sub_resource type="CapsuleShape" id=3]
 
 radius = 0.2
 height = 1.4
 _sections_unfolded = [ "Resource" ]
 
-[sub_resource type="DynamicFont" id=3]
+[sub_resource type="DynamicFont" id=4]
 
 size = 32
 use_mipmaps = true
@@ -122,12 +122,12 @@ lod_max_hysteresis = 0.0
 mesh = SubResource( 1 )
 skeleton = NodePath("..")
 material/0 = SubResource( 2 )
-_sections_unfolded = [ "material" ]
+_sections_unfolded = [ "Transform", "material" ]
 
 [node name="Shape_Capsule" type="CollisionShape" parent="." index="1"]
 
 transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, 0, 0, 0 )
-shape = SubResource( 4 )
+shape = SubResource( 3 )
 disabled = false
 _sections_unfolded = [ "Transform" ]
 
@@ -251,10 +251,44 @@ mouse_filter = 2
 mouse_default_cursor_shape = 0
 size_flags_horizontal = 1
 size_flags_vertical = 4
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 4 )
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
 text = "-------"
+percent_visible = 1.0
+lines_skipped = 0
+max_lines_visible = -1
+script = ExtResource( 7 )
+_sections_unfolded = [ "Mouse", "Rect", "Visibility", "custom_colors", "custom_fonts" ]
+
+[node name="Intruction_Label" type="Label" parent="Camera2D/DEBUG" index="1"]
+
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 993.0
+margin_top = 8.0
+margin_right = 1272.0
+margin_bottom = 194.0
+rect_pivot_offset = Vector2( 0, 0 )
+rect_clip_content = false
+mouse_filter = 2
+mouse_default_cursor_shape = 0
+size_flags_horizontal = 1
+size_flags_vertical = 4
+custom_fonts/font = SubResource( 4 )
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
+text = "Controls:
+W/S: Forward/Backward
+A/D: Left/Right
+Mouse movement: Look around.
+Space/RMB: Jump
+E: Use object when red circle is visible.
+F3: Show/hide debug text and these instructions.
+F4: Toggle fullscreen.
+Esc: Quit program."
 percent_visible = 1.0
 lines_skipped = 0
 max_lines_visible = -1
