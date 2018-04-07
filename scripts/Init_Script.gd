@@ -9,7 +9,7 @@ var Coll_Sphere_Switch = false
 ################################################################
 func _ready():
 	#Set the window title.
-	OS.set_window_title("Godot 3.x FPC Base")
+	OS.set_window_title("Godot 3.0.x FPC Base")
 
 	#Set the mouse to be captured by the program.
 	#Using "MOUSE_MODE_CAPTURED" doesn't work for some reason. I'll figure that out sometime later.

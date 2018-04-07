@@ -67,10 +67,10 @@ var Falling_Gravity = 9.8
 var Falling_Speed_Multiplier_Default = 0.25
 # Terminal velocity, in m/s. #54 m/s is the rounded terminal velocity on Earth (with Earth's air density).
 # DEFAULT: 54
-var Falling_TerminalVel = 54
+var Falling_TerminalVel = 54.0
 # The time it takes to hit terminal velocity. #14 seconds is the average time it takes to hit terminal velocity on Earth.
 # DEFAULT: 14
-var Falling_TimeToHitTerminalVelSec = 14
+var Falling_TimeToHitTerminalVelSec = 14.0
 
 #	JUMPING		#
 # The jump velocity relative to gravity.
@@ -756,7 +756,7 @@ func _physics_process(delta):
 	#####################################
 	# Get the direction the player is facing in normalized vectors.
 	DirectionInNormalVec3_FWAndBW = get_global_transform().basis.z
-	DirectionInNormalVec3_LeftAndRight = Vector3( get_global_transform().basis.x.x , get_global_transform().basis.x.y , -get_global_transform().basis.x.z )
+	DirectionInNormalVec3_LeftAndRight = get_global_transform().basis.x
 	
 	####################################################################################################
 	#											INPUT										 		   #
@@ -899,11 +899,11 @@ func _physics_process(delta):
 	#	LEFT		#
 	if(Pressed_LEFT and not Pressed_RIGHT):
 		TempMoveVel_LeftAndRight.x = -DirectionInNormalVec3_LeftAndRight.x
-		TempMoveVel_LeftAndRight.z = DirectionInNormalVec3_LeftAndRight.z
+		TempMoveVel_LeftAndRight.z = -DirectionInNormalVec3_LeftAndRight.z
 	#	RIGHT		#
 	elif(not Pressed_LEFT and Pressed_RIGHT):
 		TempMoveVel_LeftAndRight.x = DirectionInNormalVec3_LeftAndRight.x
-		TempMoveVel_LeftAndRight.z = -DirectionInNormalVec3_LeftAndRight.z
+		TempMoveVel_LeftAndRight.z = DirectionInNormalVec3_LeftAndRight.z
 	#	BOTH		#
 	elif(Pressed_LEFT and Pressed_RIGHT):
 		TempMoveVel_LeftAndRight.x = 0
@@ -960,14 +960,12 @@ func _physics_process(delta):
 	if(Pressed_Jump and Jump_Released):
 		# If the character is on the floor...
 		if(State_OnFloor):
-			# And if he was not jumping when he hit the floor...
-			if(State_Jumping==false):
-				# Say that he has started his jump.
-				State_Jumping = true
-				# Not falling.
-				State_Falling = false
-				# Reset the jump timer counter.
-				Jump_CurrentTime = 0
+			# Say that he has started his jump.
+			State_Jumping = true
+			# Not falling.
+			State_Falling = false
+			# Reset the jump timer counter.
+			Jump_CurrentTime = 0
 	
 	#########################################
 	#				JUMPING					#
@@ -1012,10 +1010,10 @@ func _physics_process(delta):
 					Falling_IsFalling = true
 					# Say that the player is currently falling.
 					State_Falling=true
-				# Otherwise, if the jump isn't over...
+				# Otherwise, if the player isn't hitting the ceiling...
 				else:
 					# Set the current velocity of the jump according to the current time of the jump, so as to smoothly taper off the jump velocity.
-					Jump_CurrentVel = Jump_Vel - (Jump_Vel * (pow(Jump_CurrentTime / Jump_Length, 2)))
+					Jump_CurrentVel = Jump_Vel - (Jump_Vel * ( pow( Jump_CurrentTime / Jump_Length , 2.0)))
 					# Increment the jump timer.
 					Jump_CurrentTime += delta
 					# Set the final Y(vertical) velocity.
@@ -1038,42 +1036,50 @@ func _physics_process(delta):
 	#########################################
 	#				FALLING					#
 	#########################################
-	# If our character is falling...
-	if(State_Falling):
-		# And if he's not jumping...
-		if(not State_Jumping):
-			# If not on floor...
-			if(not State_OnFloor):
-				# If the falling speed is less than terminal velocity...
-				if(Falling_Speed < Falling_TerminalVel):
-					# If the falling has not started yet...
-					if(not Falling_IsFalling):
-						# Say that it has started.
-						Falling_IsFalling = true
-						# And set the current falling time to "now".
-						Falling_CurrentTime = 0
-					# Otherwise, if the falling has already started...
-					elif(Falling_IsFalling and Falling_CurrentTime < Falling_TimeToHitTerminalVelSec):
-						# Update the falling timer.
-						Falling_CurrentTime += delta
-					# Set final falling speed.
-					Falling_Speed = Falling_TerminalVel * pow(Falling_CurrentTime / Falling_TimeToHitTerminalVelSec, 0.4)
-			# Otherwise, if the player is on the floor...
-			else:
-				# If the character is moving...
-				if(FinalMoveVel.x != 0 or FinalMoveVel.z != 0):
-					# Run the function that makes the character speed affected by the slope.
-					Slope_AffectSpeed()
-				# Otherwise, if the player is not moving...
+	# If our character is falling and not jumping...
+	if(State_Falling and not State_Jumping):
+		# If not on floor...
+		if(not State_OnFloor):
+			# If the falling speed is less than terminal velocity...
+			if(Falling_Speed < Falling_TerminalVel):
+				# If the falling has not started yet...
+				if(not Falling_IsFalling):
+					# Say that it has started.
+					Falling_IsFalling = true
+					# And set the current falling time to "now".
+					Falling_CurrentTime = 0
+				# Otherwise, if the falling has already started and the falling timer hasn't passed the time it takes to reach terminal velocity...
+				elif(Falling_IsFalling and Falling_CurrentTime < Falling_TimeToHitTerminalVelSec):
+					# Update the falling timer.
+					Falling_CurrentTime += delta
+
+					# If the timer has passed its limit...
+					if(Falling_CurrentTime >= Falling_TimeToHitTerminalVelSec):
+						# Then set the timer back to its limit.
+						Falling_CurrentTime = Falling_TimeToHitTerminalVelSec
+				# Otherwise, the falling timer has passed the time it takes to reach terminal velocity.
 				else:
-					# Set the falling speed multiplier to the default specified in the settings.
-					Falling_Speed_Multiplier = Falling_Speed_Multiplier_Default
+					# Set the timer back to its limit.
+					Falling_CurrentTime = Falling_TimeToHitTerminalVelSec
 				
-				# Set the final falling speed multiplier.
-				Falling_Speed = Falling_Gravity * Falling_Speed_Multiplier
-				
-			# Apply final falling velocity.
-			FinalMoveVel.y = -Falling_Speed
+				# Set final falling speed.
+				Falling_Speed = Falling_TerminalVel * pow(Falling_CurrentTime / Falling_TimeToHitTerminalVelSec, 0.4)
+		# Otherwise, if the player is on the floor...
+		else:
+			# If the character is moving...
+			if(FinalMoveVel.x != 0 or FinalMoveVel.z != 0):
+				# Run the function that makes the character speed affected by the slope.
+				Slope_AffectSpeed()
+			# Otherwise, if the player is not moving...
+			else:
+				# Set the falling speed multiplier to the default specified in the settings.
+				Falling_Speed_Multiplier = Falling_Speed_Multiplier_Default
+			
+			# Set the final falling speed multiplier.
+			Falling_Speed = Falling_Gravity * Falling_Speed_Multiplier
+			
+		# Apply final falling velocity.
+		FinalMoveVel.y = -Falling_Speed
 	
 	#####################################################################################################
 	#									FINAL MOVEMENT APPLICATION										#
