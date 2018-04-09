@@ -51,5 +51,4 @@ Player_ToggleDebug=[ Object(InputEventKey,"resource_local_to_scene":false,"resou
 [rendering]
 
 quality/directional_shadow/size=8192
-quality/shadow_atlas/size=8192
 environment/default_environment="res://environment/Main_Env.tres"
