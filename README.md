@@ -4,17 +4,16 @@
 
 A FPC (first person camera) kinematic player base for reference and using as a base for your projects.
 
-MANUAL (WIP): [Click here for the PDF manual.](https://github.com/leiget/Godot_FPC_Base/blob/master/documents/manual.pdf)
+WIKI: [Click here to go to the project's wiki manual.](https://github.com/leiget/Godot_FPC_Base/wiki)
 
-**UPDATE on April 1, 2018:** I'm still working on the manual, as it's taking quite a while, but my ETA of the project's finsish should be in the next week or so. That doesn't mean the wiki will be finished, but the PDF manual will be finalized as will the project files.
+MANUAL: [Click here for the PDF manual.](https://github.com/leiget/Godot_FPC_Base/blob/master/documents/manual.pdf)
 
-My plan is to make a all-in-one player script and scene to allow others to import it into their project with as little effort as possible.
-I also plan on making a step-by-step wiki/instruction manual on how it all works. The deadline I'm shooting for is the end of March 2018; so that would be 11:59 PM on March 31, 2018. I think I can do that. I've already got more than half done.
+If there are any problems in the manual or wiki please let me know by opening an issue in the the [issue tracker](https://github.com/leiget/Godot_FPC_Base/issues).
 
 **NOTE: About "move_and_slide()" in newer versions of Godot 3.x**
 
-I'm not sure if I should make this for the latest Godot build from github, or to just go with main releases. The reason I wonder over this is because about a week ago (~20 Feb, 2018) the Godot developers changed the "move_and_slide()" command to have an additional argument: an infinite_inertia bool.
-I think the new argument has something to with having the character act more like a rigid body or not.
-"A dynamic character controller uses a rigid body with infinite inertial tensor. Basically, it’s a rigid body that can’t rotate."
+Note that in Godot 3.0.2 the “**move_and_slide()**” function has 5 arguments, but in the latest GitHub version (as of March 07, 2018) it has 6, with the added argument being in the 3rd position and is “**bool infinite_inertia=true**”. If this option is true, what it means is that no other object can rotate the character. If false, it can if enough force is applied.”
+
+“**bool infinite_inertia=true**” means that the character can’t be rotated, because the amount of inertia needed to do so is infinite.
 
 From http://docs.godotengine.org/en/stable/tutorials/physics/kinematic_character_2d.html
