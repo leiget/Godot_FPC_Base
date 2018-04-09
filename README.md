@@ -8,6 +8,8 @@ WIKI: [Click here to go to the project's wiki manual.](https://github.com/leiget
 
 MANUAL: [Click here for the PDF manual.](https://github.com/leiget/Godot_FPC_Base/blob/master/documents/manual.pdf)
 
+If there are any problems in the manual or wiki please let me know by opening an issue in the the [issue tracker](https://github.com/leiget/Godot_FPC_Base/issues).
+
 **NOTE: About "move_and_slide()" in newer versions of Godot 3.x**
 
 Note that in Godot 3.0.2 the “**move_and_slide()**” function has 5 arguments, but in the latest GitHub version (as of March 07, 2018) it has 6, with the added argument being in the 3rd position and is “**bool infinite_inertia=true**”. If this option is true, what it means is that no other object can rotate the character. If false, it can if enough force is applied.”
